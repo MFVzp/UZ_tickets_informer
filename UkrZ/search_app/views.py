@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from .forms import StationForm
 from .models import SearchingInfo
-from UkrZaliz.uz_interface import get_good_coaches
+from .uz_interface import get_good_coaches
 
 
 class IndexView(generic.View):
