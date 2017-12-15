@@ -4,18 +4,18 @@ import requests
 from django import forms
 from django.conf import settings
 
-from.models import SearchingInfo
+from .models import SearchingInfo
 
 
 def get_station(name):
     stations = requests.get(
-        url=settings.UZ_HOST,
+        url=settings.UZ_HOST + 'purchase/station/',
         params={'term': name},
     ).json()
     for station in stations:
         if station.get('title') == name:
             return station
-    raise Exception('Available stations: {1}'.format(
+    raise Exception('Станции "{0}" не существует.\nПохожие станции: {1}'.format(
         name,
         ', '.join(['"' + station.get('title') + '"' for station in stations])
     ))
@@ -27,13 +27,13 @@ class StationForm(forms.Form):
     date_dep = forms.CharField(label='Дата')
     coach_type = forms.CharField(max_length=1, label='Тип места')
 
-    def clean(self):
+    def clean_station_from(self):
         name = self.cleaned_data.get('station_from')
         try:
             get_station(name)
         except Exception as inst:
             raise forms.ValidationError(inst.args[0])
-        return super(StationForm, self).clean()
+        return super(StationForm, self).clean_station_from()
 
 
 class SearchForm(forms.ModelForm):
