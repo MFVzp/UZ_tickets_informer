@@ -27,12 +27,13 @@ class StationForm(forms.Form):
     date_dep = forms.CharField(label='Дата')
     coach_type = forms.CharField(max_length=1, label='Тип места')
 
-    def clean_station_from(self):
+    def clean(self):
         name = self.cleaned_data.get('station_from')
         try:
             get_station(name)
         except Exception as inst:
             raise forms.ValidationError(inst.args[0])
+        return super(StationForm, self).clean()
 
 
 class SearchForm(forms.ModelForm):
