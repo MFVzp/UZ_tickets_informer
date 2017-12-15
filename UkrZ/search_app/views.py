@@ -1,9 +1,19 @@
 from django.views import generic
 from django.shortcuts import render
 
-from .forms import StationForm
 from .models import SearchingInfo
+from .forms import StationForm, SearchForm
 from .uz_interface import get_good_coaches
+
+
+class AddSearchView(generic.CreateView):
+    form_class = SearchForm
+    template_name = 'add_search.html'
+
+
+class ChangeSearchView(generic.UpdateView):
+    model = SearchingInfo
+    form_class = SearchForm
 
 
 class IndexView(generic.View):

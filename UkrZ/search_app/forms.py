@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import requests
+
 from django import forms
 from django.conf import settings
 
-import requests
+from.models import SearchingInfo
 
 
 def get_station(name):
@@ -31,3 +33,10 @@ class StationForm(forms.Form):
             get_station(name)
         except Exception as inst:
             raise forms.ValidationError(inst.args[0])
+
+
+class SearchForm(forms.ModelForm):
+
+    class Meta:
+        model = SearchingInfo
+        fields = ['station_from', 'station_till', 'date_dep', 'coach_type']
