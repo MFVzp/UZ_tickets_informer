@@ -1,47 +1,28 @@
 from django.views import generic
-from django.shortcuts import render
+from django.urls import reverse_lazy
 
 from .models import SearchingInfo
-from .forms import StationForm, SearchForm
-from .uz_interface import get_good_coaches
+from .forms import SearchForm
+
+
+class SearchListView(generic.ListView):
+    model = SearchingInfo
+    template_name = 'searching_list.html'
+    context_object_name = 'search_list'
 
 
 class AddSearchView(generic.CreateView):
     form_class = SearchForm
     template_name = 'add_search.html'
+    success_url = reverse_lazy('search:list')
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.author = self.request.user
+        instance.save()
+        return super(AddSearchView, self).form_valid(form)
 
 
 class ChangeSearchView(generic.UpdateView):
     model = SearchingInfo
     form_class = SearchForm
-
-
-class IndexView(generic.View):
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method == 'GET':
-            context = {
-                'form': StationForm(),
-            }
-            return render(request, 'index.html', context)
-        elif request.method == 'POST':
-            data = request.POST
-            station_from = data.get('station_from')
-            station_till = data.get('station_till')
-            date_dep = data.get('date_dep')
-            coach_type = data.get('coach_type')
-            SearchingInfo.objects.create(
-                city_from=station_from,
-                station_till=station_till,
-                date_dep=date_dep,
-                coach_type=coach_type
-            )
-            context = {
-                'data': get_good_coaches(
-                    station_from,
-                    station_till,
-                    date_dep,
-                    coach_type
-                )
-            }
-            return render(request, 'index.html', context)

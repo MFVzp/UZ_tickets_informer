@@ -18,7 +18,7 @@ def login_view(request):
             login(request, user)
             if next_url:
                 return redirect(next_url)
-        return redirect('cars:products_list')
+        return redirect('search:list')
     context = {
         'form': form,
         'action_title': 'Enter',
@@ -30,7 +30,7 @@ def login_view(request):
 @login_required(login_url=reverse_lazy('auth:login'))
 def logout_view(request):
     logout(request)
-    return redirect('cars:products_list')
+    return redirect('search:list')
 
 
 def register_view(request):
@@ -42,7 +42,7 @@ def register_view(request):
         user.save()
         if user is not None:
             login(request, user)
-        return redirect('cars:products_list')
+        return redirect('search:list')
     context = {
         'form': form,
         'action_title': 'Register',

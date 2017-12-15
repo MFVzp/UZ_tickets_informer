@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import IndexView
+from .views import *
 
 
 app_name = 'search'
 urlpatterns = [
-    path('', IndexView.as_view(), name='search_list'),
-    path('add', IndexView.as_view(), name='add_search')
+    path('', SearchListView.as_view(), name='list'),
+    path('add', AddSearchView.as_view(), name='add')
 ]

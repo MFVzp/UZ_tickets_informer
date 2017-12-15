@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% for search in search_list %}
+        <p>{{ search }}</p>
+    {% endfor %}
+{% endblock content %}
