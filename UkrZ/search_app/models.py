@@ -14,6 +14,7 @@ class SearchingInfo(models.Model):
         ('Л', 'Люкс')
     )
     coach_type = models.CharField('Тип места', max_length=1, choices=COACHES_TYPES)
+    amount_of_coaches = models.PositiveSmallIntegerField('Количество мест')
     create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
     is_actual = models.BooleanField('Актуальность', default=True)
 

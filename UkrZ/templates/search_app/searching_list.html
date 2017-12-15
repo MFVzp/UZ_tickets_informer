@@ -1,6 +1,27 @@
 {% extends 'base.html' %}
 {% block content %}
-    {% for search in search_list %}
-        <p>{{ search }}</p>
-    {% endfor %}
+    <table style="border-collapse: separate; padding: 5px; width: 100%; text-align: center;">
+        <tr>
+            <td>Станция отправления</td>
+            <td>Станция назначения</td>
+            <td>Дата отправления</td>
+            <td>Тип<br>места</td>
+            <td>Кол-во<br>мест</td>
+            <td>Статус</td>
+        </tr>
+        {% for search in search_list %}
+            <tr>
+                <td>{{ search.station_from }}</td>
+                <td>{{ search.station_till }}</td>
+                <td>{{ search.date_dep }}</td>
+                <td>{{ search.coach_type }}</td>
+                <td>{{ search.amount_of_coaches }}</td>
+                {% if search.is_actual %}
+                    <td style="background-color: green; color: white;">В работе</td>
+                {% else %}
+                    <td style="background-color: red; color: white;">Отлкючен</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock content %}

@@ -26,7 +26,7 @@ class SearchForm(forms.ModelForm):
 
     class Meta:
         model = SearchingInfo
-        fields = ['station_from', 'station_till', 'date_dep', 'coach_type']
+        fields = ['station_from', 'station_till', 'date_dep', 'coach_type', 'amount_of_coaches']
 
     def clean(self):
         station_from = self.cleaned_data.get('station_from')
