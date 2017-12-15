@@ -3,6 +3,7 @@ from django.conf.urls import url
 from .views import *
 
 
+app_name = 'auth'
 urlpatterns = [
     url(r'^login/$', login_view, name='login'),
     url(r'^logout/$', logout_view, name='logout'),
