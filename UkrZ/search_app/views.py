@@ -23,8 +23,3 @@ class AddSearchView(generic.CreateView):
         instance.save()
         looking_for_coaches.delay(instance.id)
         return super(AddSearchView, self).form_valid(form)
-
-
-class ChangeSearchView(generic.UpdateView):
-    model = SearchingInfo
-    form_class = SearchForm
