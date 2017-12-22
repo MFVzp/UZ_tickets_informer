@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 
 from UkrZ.celery import app
-from .models import SearchingInfo
+from .models import SearchingInfo, Result
 from .uz import Direction
 
 
@@ -74,6 +74,7 @@ def looking_for_coaches(search_id):
         coaches = direction.get_good_coaches()
         if coaches and not isinstance(coaches, str):
             for train in coaches:
+                print(train.get('date_from'))
                 best_carriage = [0, [], math.inf]
                 for carriage in train['carriages']:
                     if len(carriage['coaches']) >= search.amount_of_coaches:
@@ -83,10 +84,18 @@ def looking_for_coaches(search_id):
                             best_carriage.extend(best_coaches)
                         search.is_actual = is_actual = False
                         search.save()
+                res = Result.objects.create(
+                    train=train['train'],
+                    date_from=train.get('date_from'),
+                    date_till=train.get('date_till'),
+                    carriage=best_carriage[0],
+                    coaches=', '.join(best_carriage[1]),
+                    searching_info=search
+                )
                 message = 'Поезд {}. Вагон №{}. Места: {}. '.format(
-                    train['train'],
-                    best_carriage[0],
-                    ', '.join(best_carriage[1])
+                    res.train,
+                    res.carriage,
+                    res.coaches
                 )
                 messages += message
                 mail_to(

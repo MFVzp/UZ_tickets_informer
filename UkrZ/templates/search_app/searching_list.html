@@ -14,7 +14,15 @@
                 {% if search.is_actual %}
                     <td class="bg-success text-white">В работе</td>
                 {% else %}
-                    <td class="text-left">{{ search.result }}</td>
+                    <td class="text-left">
+                        {% for result in search.results.all %}
+                        <p>Поезд {{ result.train }}</p>
+                        <p>Дата отправления {{ result.date_from|time:"d.n.Y H:i" }}</p>
+                        <p>Дата прибытия {{ result.date_till }}</p>
+                        <p>Вагон №{{ result.carriage }}</p>
+                        <p>Места: {{ result.coaches }}</p>
+                        {% endfor %}
+                    </td>
                 {% endif %}
                 <td>{{ search.station_from }}</td>
                 <td>{{ search.station_till }}</td>

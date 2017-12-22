@@ -1,5 +1,20 @@
 # coding: utf-8
 import requests
+import datetime
+
+
+def get_datetime_from_string(text):
+    date, time = text.split()
+    date = list(map(int, date.split('-')))
+    time = list(map(int, time.split(':')))
+    return datetime.datetime(
+        year=date[0],
+        month=date[1],
+        day=date[2],
+        hour=time[0],
+        minute=time[1],
+        second=time[2]
+    )
 
 
 class Direction:
@@ -54,6 +69,9 @@ class Direction:
         else:
             self.info = list()
             self.trains = [train for train in trains if [type_id for type_id in train.get('types', {}) if type_id.get('id')==self.coach_type]]
+            for train in self.trains:
+                train['date_from'] = get_datetime_from_string(train['from']['src_date'])
+                train['date_till'] = get_datetime_from_string(train['till']['src_date'])
             return self.trains
 
     def get_carriages(self, train):
@@ -102,6 +120,8 @@ class Direction:
                         train.get('till', {}).get('station')
                     ),
                     'carriages': list(),
+                    'date_from': train.get('date_from'),
+                    'date_till': train.get('date_till'),
                 }
                 self.get_carriages(train)
                 for carriage in self.carriages[train.get('num')]:

@@ -17,7 +17,6 @@ class SearchingInfo(models.Model):
     amount_of_coaches = models.PositiveSmallIntegerField('Количество мест')
     create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
     is_actual = models.BooleanField('Актуальность', default=True)
-    result = models.TextField(null=True)
 
     class Meta:
         ordering = ['is_actual', '-create_date']
@@ -28,3 +27,13 @@ class SearchingInfo(models.Model):
             self.station_till,
             self.date_dep
         )
+
+
+class Result(models.Model):
+    searching_info = models.ForeignKey(SearchingInfo, on_delete=models.CASCADE, related_name='results')
+    train = models.CharField(max_length=8)
+    date_from = models.DateTimeField()
+    date_till = models.DateTimeField()
+    carriage = models.CharField(max_length=2)
+    coaches = models.TextField()
+    create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
