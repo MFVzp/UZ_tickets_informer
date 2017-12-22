@@ -17,6 +17,7 @@ class SearchingInfo(models.Model):
     amount_of_coaches = models.PositiveSmallIntegerField('Количество мест')
     create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
     is_actual = models.BooleanField('Актуальность', default=True)
+    result = models.TextField(null=True)
 
     class Meta:
         ordering = ['is_actual', '-create_date']

@@ -4,6 +4,7 @@ import datetime
 import math
 
 from django.utils import timezone
+from django.core.mail import send_mail
 
 from UkrZ.celery import app
 from .models import SearchingInfo
@@ -11,6 +12,12 @@ from .uz import Direction
 
 
 def mail_to(text, address):
+    # send_mail(
+    #     subject='Success',
+    #     message=text,
+    #     from_email='from@example.com',
+    #     recipient_list=[address, ]
+    # )
     print('I sent email({}) to address {}. Work is done.'.format(
         text,
         address
@@ -65,7 +72,7 @@ def looking_for_coaches(search_id):
     is_actual = search.is_actual
     while is_actual:
         coaches = direction.get_good_coaches()
-        if coaches:
+        if coaches and not isinstance(coaches, str):
             for train in coaches:
                 best_carriage = [0, [], math.inf]
                 for carriage in train['carriages']:
@@ -83,9 +90,11 @@ def looking_for_coaches(search_id):
                 )
                 messages += message
                 mail_to(
-                    text=message,
+                    text='Дата отправления {}. '.format(search.date_dep) + message,
                     address=search.author.email
                 )
+            search.result = messages
+            search.save()
         else:
             time.sleep(10)
     return messages or message

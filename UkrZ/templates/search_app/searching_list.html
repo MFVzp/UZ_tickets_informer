@@ -2,25 +2,25 @@
 {% block content %}
     <table style="border-collapse: separate; padding: 5px; width: 100%; text-align: center;">
         <tr>
-            <td>Станция отправления</td>
-            <td>Станция назначения</td>
+            <td class="w-25">Результат</td>
+            <td class="w-25">Станция отправления</td>
+            <td class="w-25">Станция назначения</td>
             <td>Дата отправления</td>
             <td>Тип<br>места</td>
             <td>Кол-во<br>мест</td>
-            <td>Статус</td>
         </tr>
         {% for search in search_list %}
             <tr>
+                {% if search.is_actual %}
+                    <td class="bg-success text-white">В работе</td>
+                {% else %}
+                    <td class="text-left">{{ search.result }}</td>
+                {% endif %}
                 <td>{{ search.station_from }}</td>
                 <td>{{ search.station_till }}</td>
                 <td>{{ search.date_dep }}</td>
                 <td>{{ search.coach_type }}</td>
                 <td>{{ search.amount_of_coaches }}</td>
-                {% if search.is_actual %}
-                    <td style="background-color: green; color: white;">В работе</td>
-                {% else %}
-                    <td style="background-color: red; color: white;">Отлкючен</td>
-                {% endif %}
             </tr>
         {% endfor %}
     </table>
