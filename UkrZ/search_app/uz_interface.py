@@ -1,20 +1,19 @@
 # coding: utf-8
-from .uz import Direction
 
 
-def get_good_coaches(station_from, station_till, date_dep, coach_type):
-    direct = Direction(station_from, station_till, date_dep, coach_type)
-    all_coaches = direct.get_info()
+def get_good_coaches(direction, needed_coaches=None):
+    all_coaches = direction.get_info()
     if isinstance(all_coaches, str):
         return all_coaches
-    GOOD_COACHES = list(range(5, 32, 2))
+    if not needed_coaches:
+        needed_coaches = list(range(5, 32, 2))
     for train in all_coaches:
         carriages = train.get('carriages')
         for carriage in carriages:
             coaches = carriage.get('coaches')
             good_coaches = list()
             for coach in coaches:
-                if int(coach) in GOOD_COACHES:
+                if int(coach) in needed_coaches:
                     good_coaches.append(coach)
             if good_coaches:
                 carriage['coaches'] = good_coaches

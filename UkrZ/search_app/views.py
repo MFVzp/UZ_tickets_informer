@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 
 from .models import SearchingInfo
 from .forms import SearchForm
+from .tasks import looking_for_coaches
 
 
 class SearchListView(generic.ListView):
@@ -20,6 +21,7 @@ class AddSearchView(generic.CreateView):
         instance = form.save(commit=False)
         instance.author = self.request.user
         instance.save()
+        looking_for_coaches.delay(instance.id)
         return super(AddSearchView, self).form_valid(form)
 
 

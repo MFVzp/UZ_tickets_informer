@@ -20,7 +20,6 @@ class Direction:
         self.coach_type = coach_type
         self.carriages = dict()
         self.coaches = dict()
-        self.info = list()
 
     def get_station(self, name):
         stations = requests.get(
@@ -53,6 +52,7 @@ class Direction:
         if isinstance(trains, str):
             self.info = trains
         else:
+            self.info = list()
             self.trains = [train for train in trains if [type_id for type_id in train.get('types', {}) if type_id.get('id')==self.coach_type]]
             return self.trains
 
@@ -89,9 +89,11 @@ class Direction:
         self.coaches[(train.get('num'), carriage.get('num'))] = coaches
         return coaches
 
-    def get_info(self):
-        self.get_trains()
-        if not self.info:
+    def get_info(self, date_dep=None):
+        if date_dep:
+            self.date_dep = date_dep
+        trains = self.get_trains()
+        if trains:
             for train in self.trains:
                 train_info = {
                     'train': '{0} {1} - {2}'.format(
@@ -109,7 +111,29 @@ class Direction:
                     })
                 self.info.append(train_info)
         return self.info
-    
+
+    def get_good_coaches(self, date_dep=None):
+        all_coaches = self.get_info(date_dep)
+        if isinstance(all_coaches, str):
+            return all_coaches
+        request_coaches = list(range(5, 32, 2))
+        for train in all_coaches:
+            carriages = train.get('carriages')
+            for carriage in carriages:
+                coaches = carriage.get('coaches')
+                good_coaches = list()
+                for coach in coaches:
+                    if int(coach) in request_coaches:
+                        good_coaches.append(coach)
+                if good_coaches:
+                    carriage['coaches'] = good_coaches
+                else:
+                    carriage.clear()
+            train['carriages'] = [carriage for carriage in carriages if carriage]
+        all_coaches = [train for train in all_coaches if train.get('carriages')]
+
+        return all_coaches if len(all_coaches) else False
+
 
 if __name__ == '__main__':
     CITY_FROM = 'Киев'
