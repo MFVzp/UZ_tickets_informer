@@ -128,6 +128,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
 
 # UkrZ settings
 UZ_HOST = 'https://booking.uz.gov.ua/ru/'

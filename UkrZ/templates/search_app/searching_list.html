@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
+{% block extra_stiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'search_app/searching_list.css' %}">
+{% endblock %}
 {% block content %}
-    <table style="border-collapse: separate; padding: 5px; width: 100%; text-align: center;">
+    <table id="searching_res_table">
         <tr>
             <td class="w-25">Результат</td>
             <td class="w-25">Станция отправления</td>

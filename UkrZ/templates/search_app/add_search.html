@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
+{% block extra_stiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'search_app/add_search.css' %}">
+{% endblock %}
 {% block content %}
-    <form method="POST">{% csrf_token %}
+    <form method="POST" action="{% url 'search:add' %}">{% csrf_token %}
         {{ form.as_p }}
         <input type="submit" value="Начать слежение">
     </form>
