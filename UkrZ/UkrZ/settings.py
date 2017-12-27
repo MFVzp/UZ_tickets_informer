@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import datetime
+from .celery import app
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -134,10 +136,23 @@ STATICFILES_DIRS = [
 
 
 # UkrZ settings
+
 UZ_HOST = 'https://booking.uz.gov.ua/ru/'
 
+
+# Email settings
 
 try:
     from settings import *
 except ImportError:
     pass
+
+
+# Celery configurations
+
+app.conf.beat_schedule = {
+    'clear-expired-invites-every-day': {
+        'task': 'auth_app.tasks.clean_expired_invites',
+        'schedule': datetime.timedelta(days=1),
+    },
+}
