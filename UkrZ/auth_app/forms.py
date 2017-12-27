@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from django import forms
 from django.contrib.auth import authenticate
 from django.utils import timezone
@@ -48,6 +50,7 @@ class AuthRegisterForm(forms.ModelForm):
             'username',
             'password',
             'password2',
+            'tel_number',
             'first_name',
             'last_name',
         )
@@ -56,6 +59,7 @@ class AuthRegisterForm(forms.ModelForm):
         password = self.cleaned_data.get("password")
         if len(password) < 7:
             raise forms.ValidationError("Минимальная длинна пароля - 7 символов.")
+        return password
 
     def clean_password2(self):
         password = self.cleaned_data.get("password")
@@ -63,6 +67,12 @@ class AuthRegisterForm(forms.ModelForm):
         if password and password2 and password != password2:
             raise forms.ValidationError("Пароли не совпадают")
         return password2
+
+    def clean_tel_number(self):
+        tel_number = self.cleaned_data.get("tel_number")
+        if not re.match(r'\+380\d{7}', tel_number):
+            raise forms.ValidationError('Введите телефон в формате "+380987654321"')
+        return tel_number
 
     def save(self, commit=True):
         user = super(AuthRegisterForm, self).save(commit=False)

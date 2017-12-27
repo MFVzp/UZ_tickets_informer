@@ -22,24 +22,31 @@ class MyUser(AbstractUser):
     username = models.CharField(
         verbose_name='Имя пользователя',
         max_length=32,
-        unique=True,
+        unique=True
     )
     first_name = models.CharField(
         verbose_name='Имя',
         max_length=32,
         blank=True,
-        null=True,
+        null=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
         max_length=32,
         blank=True,
-        null=True,
+        null=True
     )
     email = models.EmailField(
         verbose_name='Адрес електронной почты',
         max_length=64,
+        unique=True
+    )
+    tel_number = models.CharField(
+        verbose_name='Номер телефона',
+        max_length=13,
         unique=True,
+        null=True,
+        blank=True
     )
 
 
