@@ -1,10 +1,45 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.http import HttpResponseForbidden
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from django.db import transaction
 
-from .forms import AuthLoginForm, AuthRegisterForm
+from .forms import AuthLoginForm, AuthRegisterForm, InviteForm
+from .models import Invite
+from search_app.tasks import mail_to
+
+
+ACTIONS = {
+    'login': 'Войти',
+    'register': 'Зарегистрироваться',
+    'invite': 'Пригласить'
+}
+
+
+def invite_view(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden('Вы не властны сделать это.')
+    form = InviteForm(request.POST or None)
+    if form.is_valid():
+        invite = form.save()
+        url = request.build_absolute_uri(location=reverse('auth:register')) + '?code=' + invite.code
+        text = 'Для регистрации на сайте перейдите по ссылке\n' + url
+        print(text)
+        mail_to.delay(
+            subject='Приглашение на регистрацию.',
+            text=text,
+            address=[invite.email, ]
+        )
+        return redirect('search:list')
+    context = {
+        'form': form,
+        'action': ACTIONS.get('invite'),
+    }
+    return render(request, 'form.html', context)
 
 
 def login_view(request):
@@ -21,8 +56,7 @@ def login_view(request):
         return redirect('search:list')
     context = {
         'form': form,
-        'action_title': 'Enter',
-        'action_button': 'Enter',
+        'action': ACTIONS.get('login'),
     }
     return render(request, 'form.html', context)
 
@@ -34,18 +68,30 @@ def logout_view(request):
 
 
 def register_view(request):
+    code = request.GET.get('code') or request.POST.get('code')
+    if not code:
+        return HttpResponseForbidden('Регистрация возможна только для приглашенных пользователей.')
+    try:
+        invite = Invite.objects.get(code=code)
+    except ObjectDoesNotExist:
+        return HttpResponseForbidden('Вы ввели неверный код приглашения.')
+    if invite.expiration_date < timezone.now():
+        return HttpResponseForbidden('Ваш код приглашения истек.')
+
     form = AuthRegisterForm(request.POST or None)
     if form.is_valid():
-        user = form.save()
+        user = form.save(commit=False)
         password = form.cleaned_data.get('password')
         user.set_password(password)
-        user.save()
+        with transaction.atomic():
+            user.save()
+            invite.delete()
         if user is not None:
             login(request, user)
         return redirect('search:list')
     context = {
+        'code': code,
         'form': form,
-        'action_title': 'Register',
-        'action_button': 'Sign Up',
+        'action': ACTIONS.get('register'),
     }
     return render(request, 'form.html', context)

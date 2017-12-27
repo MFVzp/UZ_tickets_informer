@@ -1,10 +1,17 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
+{% block extra_stiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'search_app/add_search.css' %}">
+{% endblock %}
 {% block content %}
-<div class="col-md-6 offset-md-4">
-    <h1>{{ action_title }}</h1>
-    <form method="POST" action="">{% csrf_token %}
+<div class="col-md-4 offset-md-4">
+    <h1>{{ action }}</h1>
+    <form method="POST" action="" class="mt-5">{% csrf_token %}
         {{ form.as_p }}
-        <input type="submit" class="btn btn-default" value="{{ action_button }}"/>
+        {% if code %}
+            <input name="code" value="{{ code }}" hidden>
+        {% endif %}
+        <input type="submit" class="submit btn btn-success" value="{{ action }}"/>
     </form>
 </div>
 {% endblock content %}
