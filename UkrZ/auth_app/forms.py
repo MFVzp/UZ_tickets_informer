@@ -14,11 +14,9 @@ class InviteForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        invites = Invite.objects.filter(email=email)
+        invites = Invite.objects.filter(email=email, expiration_date__gt=timezone.now())
         if invites.exists():
-            for invite in invites:
-                if invite.expiration_date > timezone.now():
-                    raise forms.ValidationError('Приглашение на данный email уже выслано.')
+            raise forms.ValidationError('Приглашение на данный email уже выслано.')
         users = get_user_model().objects.filter(email=email)
         if users.exists():
             raise forms.ValidationError('Пользователь с данным email уже зарегистрирован.')
