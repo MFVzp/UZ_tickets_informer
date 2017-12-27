@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from enum import Enum
+
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required
@@ -13,11 +15,10 @@ from .models import Invite
 from search_app.tasks import mail_to
 
 
-ACTIONS = {
-    'login': 'Войти',
-    'register': 'Зарегистрироваться',
-    'invite': 'Пригласить'
-}
+class Action(Enum):
+    LOGIN = 'Войти'
+    REGISTER = 'Зарегистрироваться'
+    INVITE = 'Пригласить'
 
 
 def invite_view(request):
@@ -37,7 +38,7 @@ def invite_view(request):
         return redirect('search:list')
     context = {
         'form': form,
-        'action': ACTIONS.get('invite'),
+        'action': Action.INVITE.value,
     }
     return render(request, 'form.html', context)
 
@@ -56,7 +57,7 @@ def login_view(request):
         return redirect('search:list')
     context = {
         'form': form,
-        'action': ACTIONS.get('login'),
+        'action': Action.LOGIN.value,
     }
     return render(request, 'form.html', context)
 
@@ -92,6 +93,6 @@ def register_view(request):
     context = {
         'code': code,
         'form': form,
-        'action': ACTIONS.get('register'),
+        'action': Action.REGISTER.value,
     }
     return render(request, 'form.html', context)
