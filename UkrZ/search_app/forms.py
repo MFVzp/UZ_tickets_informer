@@ -2,26 +2,11 @@
 import re
 
 from django import forms
-from django.conf import settings
 from django.utils import timezone
-import requests
 
 from .models import SearchingInfo
-from search_app import secondary_functions
-
-
-def get_station(name):
-    stations = requests.get(
-        url=settings.UZ_HOST + 'purchase/station/',
-        params={'term': name},
-    ).json()
-    for station in stations:
-        if station.get('title') == name:
-            return station
-    raise ValueError('Станции "{0}" не существует.\nПохожие станции: {1}'.format(
-        name,
-        (', '.join(['"' + station.get('title') + '"' for station in stations]) or 'нет похожих станций')
-    ))
+from search_app import utils
+from .utils import get_station
 
 
 class SearchForm(forms.ModelForm):
@@ -51,7 +36,7 @@ class SearchForm(forms.ModelForm):
         if not re.match(r'\d{2}.\d{2}.\d{4}', date_dep):
             raise forms.ValidationError('Вы ввели неправильную дату. Введите дату еще раз в формате "дд.мм.гггг"')
         try:
-            date_dep_in_date_format = secondary_functions.get_date_from_string(date_dep)
+            date_dep_in_date_format = utils.get_date_from_string(date_dep)
         except ValueError as e:
             raise forms.ValidationError(e.args[0])
         if date_dep_in_date_format < timezone.localdate():

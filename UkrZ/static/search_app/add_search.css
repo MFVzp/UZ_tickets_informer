@@ -2,3 +2,11 @@
     color: red;
     font-weight: bold;
 }
+
+input, select {
+    float: right;
+}
+
+.submit {
+    float: left;
+}

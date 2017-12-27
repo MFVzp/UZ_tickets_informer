@@ -1,20 +1,45 @@
 # coding: utf-8
-import requests
 import datetime
+import math
+
+import requests
+from django.conf import settings
 
 
-def get_datetime_from_string(text):
-    date, time = text.split()
-    date = list(map(int, date.split('-')))
-    time = list(map(int, time.split(':')))
-    return datetime.datetime(
-        year=date[0],
-        month=date[1],
-        day=date[2],
-        hour=time[0],
-        minute=time[1],
-        second=time[2]
-    )
+def get_date_from_string(date_text):
+    date = list(map(int, date_text.split('.')))
+    return datetime.date(date[-1], date[-2], date[-3])
+
+
+def sum_of_odds(numbers_list):
+    res = 0
+    for i in range(len(numbers_list[:-1])):
+        res += numbers_list[i+1] - numbers_list[i]
+    return res
+
+
+def get_best_of_the_best(coaches_list, amount):
+    the_best_combination = [[], math.inf]
+    for i in range(len(coaches_list[:len(coaches_list) + 1 - amount])):
+        combination = coaches_list[i:i+amount]
+        difference_between_coaches = sum_of_odds(list(map(int, combination)))
+        if difference_between_coaches < the_best_combination[1]:
+            the_best_combination = [combination, difference_between_coaches]
+    return the_best_combination
+
+
+def get_station(name):
+    stations = requests.get(
+        url=settings.UZ_HOST + 'purchase/station/',
+        params={'term': name},
+    ).json()
+    for station in stations:
+        if station.get('title') == name:
+            return station
+    raise ValueError('Станции "{0}" не существует.\nПохожие станции: {1}'.format(
+        name,
+        (', '.join(['"' + station.get('title') + '"' for station in stations]) or 'нет похожих станций')
+    ))
 
 
 class Direction:
@@ -70,8 +95,8 @@ class Direction:
             self.info = list()
             self.trains = [train for train in trains if [type_id for type_id in train.get('types', {}) if type_id.get('id')==self.coach_type]]
             for train in self.trains:
-                train['date_from'] = get_datetime_from_string(train['from']['src_date'])
-                train['date_till'] = get_datetime_from_string(train['till']['src_date'])
+                train['date_from'] = datetime.datetime.strptime(train['from']['src_date'], "%Y-%m-%d %H:%M:%S")
+                train['date_till'] = datetime.datetime.strptime(train['till']['src_date'], "%Y-%m-%d %H:%M:%S")
             return self.trains
 
     def get_carriages(self, train):
@@ -153,13 +178,3 @@ class Direction:
         all_coaches = [train for train in all_coaches if train.get('carriages')]
 
         return all_coaches if len(all_coaches) else False
-
-
-if __name__ == '__main__':
-    CITY_FROM = 'Киев'
-    CITY_TILL = 'Запорожье 1'
-    DATE = '30.12.2017'
-
-    direct = Direction(CITY_TILL, CITY_FROM, DATE)
-    coaches = direct.get_info()
-    print(coaches, '\n')

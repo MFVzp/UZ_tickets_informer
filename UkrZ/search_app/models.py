@@ -15,7 +15,7 @@ class SearchingInfo(models.Model):
     )
     coach_type = models.CharField('Тип места', max_length=1, choices=COACHES_TYPES)
     amount_of_coaches = models.PositiveSmallIntegerField('Количество мест')
-    create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
+    create_date = models.DateField('Дата создания запроса', auto_now_add=True)
     is_actual = models.BooleanField('Актуальность', default=True)
 
     class Meta:
@@ -29,11 +29,20 @@ class SearchingInfo(models.Model):
         )
 
 
-class Result(models.Model):
-    searching_info = models.ForeignKey(SearchingInfo, on_delete=models.CASCADE, related_name='results')
+class SuccessResult(models.Model):
+    searching_info = models.ForeignKey(SearchingInfo, on_delete=models.CASCADE, related_name='success_results')
     train = models.CharField(max_length=8)
     date_from = models.DateTimeField()
     date_till = models.DateTimeField()
     carriage = models.CharField(max_length=2)
     coaches = models.TextField()
-    create_date = models.DateField('Дата создания запроса', auto_now_add=True, auto_now=False)
+    create_date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-create_date', ]
+
+
+class FailResult(models.Model):
+    searching_info = models.OneToOneField(SearchingInfo, on_delete=models.CASCADE, related_name='fail_result')
+    fail_message = models.TextField()
+    create_date = models.DateField(auto_now_add=True)

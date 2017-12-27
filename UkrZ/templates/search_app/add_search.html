@@ -4,8 +4,8 @@
     <link rel="stylesheet" type="text/css" href="{% static 'search_app/add_search.css' %}">
 {% endblock %}
 {% block content %}
-    <form method="POST" action="{% url 'search:add' %}">{% csrf_token %}
+    <form method="POST" action="{% url 'search:add' %}" class="col-md-4 offset-md-4 mt-5">{% csrf_token %}
         {{ form.as_p }}
-        <input type="submit" value="Начать слежение">
+        <input class="submit btn btn-success" type="submit" value="Начать слежение">
     </form>
 {% endblock content %}
