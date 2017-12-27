@@ -135,3 +135,9 @@ STATICFILES_DIRS = [
 
 # UkrZ settings
 UZ_HOST = 'https://booking.uz.gov.ua/ru/'
+
+
+try:
+    from settings import *
+except ImportError:
+    pass

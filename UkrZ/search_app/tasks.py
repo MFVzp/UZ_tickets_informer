@@ -4,6 +4,7 @@ import math
 
 from django.utils import timezone
 from django.core.mail import send_mail
+from django.conf import settings
 
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult
@@ -11,21 +12,21 @@ from search_app import utils
 
 
 @app.task
-def mail_to(text, address):
-    # send_mail(
-    #     subject='Success',
-    #     message=text,
-    #     from_email='from@example.com',
-    #     recipient_list=[address, ]
-    # )
-    print('I sent email({}) to address {}. Work is done.'.format(
+def mail_to(subject: str, text: str, address: list) -> str:
+    send_mail(
+        subject=subject,
+        message=text,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=address
+    )
+    return 'I sent email({}) to address {}.'.format(
         text,
         address
-    ))
+    )
 
 
 @app.task
-def looking_for_coaches(search_id):
+def looking_for_coaches(search_id: int):
     messages = str()
     search = SearchingInfo.objects.get(id=search_id)
     message = 'Поиск {} не актуальный.'.format(search)
@@ -42,10 +43,6 @@ def looking_for_coaches(search_id):
                 message = 'Дата отправления для направления "{} - {}" прошла. Поиск был остановлен.'.format(
                     direction.station_from['title'],
                     direction.station_till['title']
-                )
-                mail_to.delay(
-                    text=message,
-                    address=search.author.email
                 )
                 FailResult.objects.create(
                     searching_info=search,
@@ -82,8 +79,9 @@ def looking_for_coaches(search_id):
                         )
                         messages += message
                         mail_to.delay(
-                            text='Дата отправления {}. '.format(search.date_dep) + message,
-                            address=search.author.email
+                            subject='Билеты успешно найдены.',
+                            text='Дата отправления {}. '.format(search.date_dep) + message + '\n' + settings.UZ_HOST,
+                            address=[search.author.email, ]
                         )
             else:
                 time.sleep(10)
