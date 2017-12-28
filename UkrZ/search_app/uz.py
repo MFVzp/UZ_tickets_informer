@@ -189,7 +189,7 @@ class Direction:
         ).get('value', {}).get('places', {}).values()
         [carriage.coaches.extend(coach) for coach in coaches]
 
-    def get_info(self, date_dep=None):
+    def run(self, date_dep=None):
         if date_dep:
             self.date_dep = date_dep
             self.trains.clear()
@@ -199,4 +199,6 @@ class Direction:
                 self.add_carriages(train)
                 for carriage in train.carriages:
                     self.add_coaches(train, carriage)
-        return self.trains
+
+    def get_info(self):
+        return self.__str__()
