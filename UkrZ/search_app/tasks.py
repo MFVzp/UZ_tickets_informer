@@ -5,6 +5,7 @@ import math
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult
@@ -12,12 +13,13 @@ from search_app import utils
 
 
 @app.task
-def mail_to(subject: str, text: str, address: list) -> str:
+def mail_to(subject: str, text: str, address: list, html_message: str=None) -> str:
     send_mail(
         subject=subject,
         message=text,
         from_email=settings.EMAIL_HOST_USER,
-        recipient_list=address
+        recipient_list=address,
+        html_message=html_message
     )
     return 'I sent email({}) to address {}.'.format(
         text,
@@ -27,7 +29,6 @@ def mail_to(subject: str, text: str, address: list) -> str:
 
 @app.task
 def looking_for_coaches(search_id: int):
-    messages = str()
     search = SearchingInfo.objects.get(id=search_id)
     message = 'Поиск {} не актуальный.'.format(search)
     direction = utils.Direction(
@@ -41,8 +42,8 @@ def looking_for_coaches(search_id: int):
         try:
             if date_dep < timezone.localdate():
                 message = 'Дата отправления для направления "{} - {}" прошла. Поиск был остановлен.'.format(
-                    direction.station_from['title'],
-                    direction.station_till['title']
+                    search.station_from,
+                    search.station_till
                 )
                 FailResult.objects.create(
                     searching_info=search,
@@ -62,7 +63,7 @@ def looking_for_coaches(search_id: int):
                                 best_carriage = [carriage['number'], ]
                                 best_carriage.extend(best_coaches)
                     if best_carriage[0]:
-                        res = SuccessResult.objects.create(
+                        SuccessResult.objects.create(
                             train=train['train'],
                             date_from=train.get('date_from'),
                             date_till=train.get('date_till'),
@@ -72,21 +73,24 @@ def looking_for_coaches(search_id: int):
                         )
                         search.is_actual = False
                         search.save()
-                        message = 'Поезд {}. Вагон №{}. Места: {}. '.format(
-                            res.train,
-                            res.carriage,
-                            res.coaches
-                        )
-                        messages += message
-                        mail_to.delay(
-                            subject='Билеты успешно найдены.',
-                            text='Дата отправления {}. '.format(search.date_dep) + message + '\n' + settings.UZ_HOST,
-                            address=[search.author.email, ]
-                        )
+                        message = 'Success'
             else:
                 time.sleep(10)
         except Exception as e:
             search.is_actual = False
             search.save()
             raise e
-    return messages or message
+    if search.success_results.all().exists():
+        context = {
+            'station_from': search.station_from,
+            'station_till': search.station_till,
+            'date_dep': search.date_dep,
+            'results': search.success_results.all(),
+        }
+        mail_to.delay(
+            subject='Билеты успешно найдены.',
+            text=render_to_string('success.txt', context=context),
+            address=[search.author.email, ],
+            html_message=render_to_string('success.html', context=context)
+        )
+    return message

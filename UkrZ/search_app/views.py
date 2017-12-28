@@ -37,7 +37,7 @@ class AddSearchView(LoginRequiredMixin, generic.CreateView):
             author=self.request.user,
             is_actual=True
         )
-        if len(active_user_searches) >= MAX_ACTIVE_SEARCHES_PER_USER:
+        if active_user_searches.count() >= MAX_ACTIVE_SEARCHES_PER_USER:
             return HttpResponse('Вы достигли максимального чиста активных запросов'.encode())
         else:
             instance = form.save(commit=False)

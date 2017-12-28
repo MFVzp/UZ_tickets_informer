@@ -9,6 +9,7 @@ from django.http import HttpResponseForbidden
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.db import transaction
+from django.template.loader import render_to_string
 
 from .forms import AuthLoginForm, AuthRegisterForm, InviteForm
 from .models import Invite
@@ -27,13 +28,17 @@ def invite_view(request):
     form = InviteForm(request.POST or None)
     if form.is_valid():
         invite = form.save()
-        url = request.build_absolute_uri(location=reverse('auth:register')) + '?code=' + invite.code
-        text = 'Для регистрации на сайте перейдите по ссылке\n' + url
-        print(text)
+        context = {
+            'invite_uri': '{}?code={}'.format(
+                request.build_absolute_uri(location=reverse('auth:register')),
+                invite.code
+            )
+        }
         mail_to.delay(
             subject='Приглашение на регистрацию.',
-            text=text,
-            address=[invite.email, ]
+            text=render_to_string('invite.txt', context=context, ),
+            address=[invite.email, ],
+            html_message=render_to_string('invite.html', context=context, )
         )
         return redirect('search:list')
     context = {
@@ -79,7 +84,12 @@ def register_view(request):
     if invite.expiration_date < timezone.now():
         return HttpResponseForbidden('Ваш код приглашения истек.')
 
-    form = AuthRegisterForm(request.POST or None)
+    form = AuthRegisterForm(
+        request.POST or None,
+        initial={
+            'email': invite.email,
+        }
+    )
     if form.is_valid():
         user = form.save(commit=False)
         password = form.cleaned_data.get('password')

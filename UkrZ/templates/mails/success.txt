@@ -1,0 +1,10 @@
+Появились свободные места по Вашему запросу "{{ station_from }} - {{ station_till }} {{ date_dep }}"
+
+{% for result in results %}
+    Поезд {{ result.train }}
+    Дата отправления {{ result.date_from|date:"d.m.Y H:i" }}
+    Дата прибытия {{ result.date_till|date:"d.m.Y H:i" }}
+    Вагон №{{ result.carriage }}
+    Мест{{ result.coaches|pluralize:"а,о" }}: {{ result.coaches }}
+
+{% endfor %}
