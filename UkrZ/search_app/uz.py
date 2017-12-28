@@ -7,7 +7,7 @@ import requests
 
 class TrainException(Exception):
     """
-    Raise it when request for train return error.
+    Raise it when request return error.
     """
 
 
@@ -117,7 +117,6 @@ class Direction:
             headers=headers
         ).json()
         time.sleep(0.1)
-        print(response)
         if isinstance(response, dict) and response.get('error'):
             raise TrainException(
                 '{}\nRequest args:\n\tmethod: {}\n\turl: {}\n\tdata: {}\n\tparams: {}\n\theaders: {}'.format(
