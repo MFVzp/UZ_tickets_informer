@@ -186,25 +186,3 @@ class Direction:
                 for carriage in train.carriages:
                     self.add_coaches(train, carriage)
         return self.trains
-
-    def get_good_coaches(self, date_dep=None):
-        all_coaches = self.get_info(date_dep)
-        if isinstance(all_coaches, str):
-            return all_coaches
-        request_coaches = list(range(5, 32, 2))
-        for train in all_coaches:
-            carriages = train.get('carriages')
-            for carriage in carriages:
-                coaches = carriage.get('coaches')
-                good_coaches = list()
-                for coach in coaches:
-                    if int(coach) in request_coaches:
-                        good_coaches.append(coach)
-                if good_coaches:
-                    carriage['coaches'] = good_coaches
-                else:
-                    carriage.clear()
-            train['carriages'] = [carriage for carriage in carriages if carriage]
-        all_coaches = [train for train in all_coaches if train.get('carriages')]
-
-        return all_coaches if len(all_coaches) else False
