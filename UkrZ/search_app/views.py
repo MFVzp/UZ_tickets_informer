@@ -34,7 +34,7 @@ class AddSearchView(LoginRequiredMixin, generic.CreateView):
     def form_valid(self, form):
         user = self.request.user
         active_user_searches = SearchingInfo.objects.filter(
-            author=self.request.user,
+            author=user,
             is_actual=True
         )
         if active_user_searches.count() >= MAX_ACTIVE_SEARCHES_PER_USER:

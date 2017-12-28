@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult
 from search_app import utils
+from .uz import Direction
 
 
 @app.task
@@ -31,7 +32,7 @@ def mail_to(subject: str, text: str, address: list, html_message: str=None) -> s
 def looking_for_coaches(search_id: int):
     search = SearchingInfo.objects.get(id=search_id)
     message = 'Поиск {} не актуальный.'.format(search)
-    direction = utils.Direction(
+    direction = Direction(
         city_from=search.station_from,
         city_till=search.station_till,
         date_dep=search.date_dep,
