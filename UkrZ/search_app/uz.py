@@ -36,25 +36,29 @@ class Station:
 
 class Train:
 
-    def __init__(self, data: dict=None, from_dict: bool=True, *args, **kwargs):
-        if from_dict and data:
-            self.number = data.get('num')
-            self.travel_time = data.get('travel_time')
-            self.date_dep_code = data['from']['date']
-            self.end_station_from = data['from']['station']
-            self.end_station_till = data['till']['station']
-            self.datetime_from = datetime.datetime.strptime(data['from']['src_date'], "%Y-%m-%d %H:%M:%S")
-            self.datetime_till = datetime.datetime.strptime(data['till']['src_date'], "%Y-%m-%d %H:%M:%S")
-            self.places = [(place_type.get('id'), place_type.get('places')) for place_type in data.get('types')]
-            self.carriages = list()
-        elif args or kwargs:
-            """There must by init from *args **kwargs"""
-            raise NotImplementedError
-        else:
-            raise ValueError
+    @classmethod
+    def from_dict(cls, data):
+        obj = super(Train, cls).__new__(cls)
+        kwargs = {
+            'number': data.get('num'),
+            'travel_time': data.get('travel_time'),
+            'date_dep_code': data['from']['date'],
+            'end_station_from': data['from']['station'],
+            'end_station_till': data['till']['station'],
+            'datetime_from': datetime.datetime.strptime(data['from']['src_date'], "%Y-%m-%d %H:%M:%S"),
+            'datetime_till': datetime.datetime.strptime(data['till']['src_date'], "%Y-%m-%d %H:%M:%S"),
+            'places': [(place_type.get('id'), place_type.get('places')) for place_type in data.get('types')],
+            'carriages': list()
+        }
+        obj.__init__(**kwargs)
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
 
     def __str__(self):
-        return 'Поезд №{} {} - {}\nВагоны:\n\t{}'.format(
+        return '\nПоезд №{} {} - {}\nВагоны:\n\t{}'.format(
             self.number,
             self.end_station_from,
             self.end_station_till,
@@ -64,16 +68,20 @@ class Train:
 
 class Carriage:
 
-    def __init__(self, data: dict=None, from_dict: bool=True, *args, **kwargs):
-        if from_dict and data:
-            self.number = data.get('num')
-            self.coach_class = data.get('coach_class')
-            self.coaches = list()
-        elif args or kwargs:
-            """There must by init from *args **kwargs"""
-            raise NotImplementedError
-        else:
-            raise ValueError
+    @classmethod
+    def from_dict(cls, data):
+        obj = super(Carriage, cls).__new__(cls)
+        kwargs = {
+            'number': data.get('num'),
+            'coach_class': data.get('coach_class'),
+            'coaches': list(),
+        }
+        obj.__init__(**kwargs)
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
 
     def __str__(self):
         return '№{}, места: {}'.format(
@@ -99,7 +107,7 @@ class Direction:
         self.trains = list()
 
     def __str__(self):
-        return 'Направление {} - {} Дата: {} Тип мест: {}\n\n{}'.format(
+        return 'Направление {} - {} | Дата: {} | Тип мест: {}\n\n{}'.format(
             self.station_from,
             self.station_till,
             self.date_dep,
@@ -142,7 +150,13 @@ class Direction:
         )
         for train in trains.get('value'):
             if [coach_type for coach_type in train.get('types') if coach_type.get('id') == self.coach_type]:
-                self.trains.append(Train(data=train))
+                self.trains.append(Train.from_dict(data=train))
+        if not self.trains:
+            raise TrainException(
+                'По заданному Вами направлению мест типа "{}" нет.'.format(
+                    self.coach_type
+                )
+            )
         return self.trains
 
     def add_carriages(self, train):
@@ -158,7 +172,7 @@ class Direction:
             }
         ).get('coaches')
         for carriage in carriages:
-            train.carriages.append(Carriage(carriage))
+            train.carriages.append(Carriage.from_dict(data=carriage))
 
     def add_coaches(self, train, carriage):
         coaches = self.make_request(
@@ -178,6 +192,7 @@ class Direction:
     def get_info(self, date_dep=None):
         if date_dep:
             self.date_dep = date_dep
+            self.trains.clear()
         trains = self.get_trains()
         if trains:
             for train in trains:
