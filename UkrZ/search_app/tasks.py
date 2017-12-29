@@ -5,6 +5,9 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from viberbot import Api
+from viberbot.api.bot_configuration import BotConfiguration
+from viberbot.api.messages import TextMessage
 
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult, Carriage
@@ -13,15 +16,34 @@ from .uz import Direction, TrainException
 
 
 @app.task
-def mail_to(subject: str, text: str, address: list, html_message: str=None) -> str:
+def send_result(search_id: int) -> str:
+    search = SearchingInfo.objects.get(id=search_id)
+    context = {
+        'station_from': search.station_from,
+        'station_till': search.station_till,
+        'date_dep': search.date_dep,
+        'results': search.success_results.all().prefetch_related('carriages'),
+        'uz_url': settings.UZ_HOST
+    }
+    user = search.author
     send_mail(
-        subject=subject,
-        message=text,
+        subject='Билеты успешно найдены.',
+        message=render_to_string('success.txt', context=context),
         from_email=settings.EMAIL_HOST_USER,
-        recipient_list=address,
-        html_message=html_message
+        recipient_list=[user.email, ],
+        html_message=render_to_string('success.html', context=context)
     )
-    return 'I sent email to address {}.'.format(address)
+    bot_configuration = BotConfiguration(
+        name='PythonSampleBot',
+        auth_token=settings.VIBER_AUTH_TOKEN
+    )
+    viber = Api(bot_configuration)
+    #account_info = viber.get_account_info()
+    # Получение user.viber_id
+    #viber.id = '123456789'
+    #viber.send_messages()
+
+    return 'I sent email and Viber message to {}.'.format(user.username)
 
 
 @app.task
@@ -81,17 +103,5 @@ def looking_for_coaches(search_id: int):
         search.save()
         raise e
     if search.success_results.all().exists():
-        print(search.success_results.all().prefetch_related('carriages'))
-        context = {
-            'station_from': search.station_from,
-            'station_till': search.station_till,
-            'date_dep': search.date_dep,
-            'results': search.success_results.all().prefetch_related('carriages'),
-        }
-        mail_to.delay(
-            subject='Билеты успешно найдены.',
-            text=render_to_string('success.txt', context=context),
-            address=[search.author.email, ],
-            html_message=render_to_string('success.html', context=context)
-        )
+        send_result.delay(search_id=search.id)
     return message

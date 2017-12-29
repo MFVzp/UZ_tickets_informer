@@ -10,3 +10,5 @@
     {% endfor %}
 
 {% endfor %}
+
+{{ uz_url }}

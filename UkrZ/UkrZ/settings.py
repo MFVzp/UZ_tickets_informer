@@ -141,7 +141,7 @@ STATICFILES_DIRS = [
 UZ_HOST = 'https://booking.uz.gov.ua/ru/'
 
 
-# Email settings
+# Email and Viber settings
 
 try:
     from settings import *
