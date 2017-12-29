@@ -8,9 +8,9 @@
         <table id="searching_res_table" border="1" cellspacing="0">
             <thead>
                 <tr>
-                    <th class="w-25">Результат</th>
-                    <th class="w-25">Станция отправления</th>
-                    <th class="w-25">Станция назначения</th>
+                    <th class="w-50">Результат</th>
+                    <th>Станция отправления</th>
+                    <th>Станция назначения</th>
                     <th>Дата отправления</th>
                     <th>Тип<br>места</th>
                     <th>Кол-во<br>мест</th>
@@ -30,8 +30,11 @@
                                 <p class="mb-0">Поезд <b>{{ result.train }}</b></p>
                                 <p class="mb-0">Дата отправления <b>{{ result.date_from|date:"d.m.Y H:i" }}</b></p>
                                 <p class="mb-0">Дата прибытия <b>{{ result.date_till|date:"d.m.Y H:i" }}</b></p>
-                                <p class="mb-0">Вагон <b>{{ result.carriage }}</b></p>
-                                <p>Мест{{ result.coaches|pluralize:"а,о" }}: <b>{{ result.coaches }}</b></p>
+                                {% for carriage in result.carriages.all %}
+                                    <p class="mb-0">Вагон №<b>{{ carriage.number }}</b></p>
+                                    <p class="mb-0 pl-3">Места: <b>{{ carriage.coaches }}</b></p>
+                                {% endfor %}
+                                <br>
                             {% endfor %}
                         {% else %}
                             Странно, но результатов нет(попробуйте возобновить поиск).

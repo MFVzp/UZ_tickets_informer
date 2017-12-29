@@ -36,12 +36,22 @@ class SuccessResult(models.Model):
     train = models.CharField(max_length=8)
     date_from = models.DateTimeField()
     date_till = models.DateTimeField()
-    carriage = models.CharField(max_length=2)
-    coaches = models.TextField()
     create_date = models.DateField(auto_now_add=True)
 
     class Meta:
         ordering = ['-create_date', ]
+
+    def __str__(self):
+        return self.train
+
+
+class Carriage(models.Model):
+    success_result = models.ForeignKey(SuccessResult, on_delete=models.CASCADE, related_name='carriages')
+    number = models.CharField(max_length=2)
+    coaches = models.TextField()
+
+    def __str__(self):
+        return self.number
 
 
 class FailResult(models.Model):

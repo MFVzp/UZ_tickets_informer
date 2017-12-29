@@ -88,7 +88,7 @@ class Carriage:
             setattr(self, key, value)
 
     def __str__(self):
-        return '№{}'.format(self.number)
+        return self.number
 
 
 class Direction:

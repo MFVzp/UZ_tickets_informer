@@ -4,7 +4,9 @@
     Поезд {{ result.train }}
     Дата отправления {{ result.date_from|date:"d.m.Y H:i" }}
     Дата прибытия {{ result.date_till|date:"d.m.Y H:i" }}
-    Вагон {{ result.carriage }}
-    Мест{{ result.coaches|pluralize:"а,о" }}: {{ result.coaches }}
+    {% for carriage in result.carriages.all %}
+    Вагон №{{ carriage.number }}
+        Места: {{ carriage.coaches }}
+    {% endfor %}
 
 {% endfor %}

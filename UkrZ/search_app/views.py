@@ -21,7 +21,9 @@ class SearchListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         queryset = SearchingInfo.objects.filter(
             author=self.request.user
-        ).select_related('fail_result').prefetch_related('success_results')
+        ).select_related(
+            'fail_result'
+        ).prefetch_related('success_results').prefetch_related('success_results__carriages')
         return queryset
 
 

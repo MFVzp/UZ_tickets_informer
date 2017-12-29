@@ -1,6 +1,5 @@
 # coding: utf-8
 import time
-import math
 
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -8,7 +7,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from UkrZ.celery import app
-from .models import SearchingInfo, SuccessResult, FailResult
+from .models import SearchingInfo, SuccessResult, FailResult, Carriage
 from search_app import utils
 from .uz import Direction, TrainException
 
@@ -22,10 +21,7 @@ def mail_to(subject: str, text: str, address: list, html_message: str=None) -> s
         recipient_list=address,
         html_message=html_message
     )
-    return 'I sent email({}) to address {}.'.format(
-        text,
-        address
-    )
+    return 'I sent email to address {}.'.format(address)
 
 
 @app.task
@@ -65,27 +61,32 @@ def looking_for_coaches(search_id: int):
             trains = direction.get_trains(amount=amount_of_coaches, get_good=get_good, get_best=get_best)
             if trains:
                 for train in trains:
-                    SuccessResult.objects.create(
+                    result = SuccessResult.objects.create(
                         train=train.number,
                         date_from=train.datetime_from,
                         date_till=train.datetime_till,
-                        carriage=train.carriages[0],
-                        coaches=', '.join(train.carriages[0].coaches),
                         searching_info=search
                     )
-                    search.is_actual = False
-                    search.save()
-                    message = 'Success'
+                    for carriage in train.carriages:
+                        Carriage.objects.create(
+                            success_result=result,
+                            number=carriage.number,
+                            coaches=', '.join(carriage.coaches)
+                        )
+                search.is_actual = False
+                search.save()
+                message = 'Success'
     except Exception as e:
         search.is_actual = False
         search.save()
         raise e
     if search.success_results.all().exists():
+        print(search.success_results.all().prefetch_related('carriages'))
         context = {
             'station_from': search.station_from,
             'station_till': search.station_till,
             'date_dep': search.date_dep,
-            'results': search.success_results.all(),
+            'results': search.success_results.all().prefetch_related('carriages'),
         }
         mail_to.delay(
             subject='Билеты успешно найдены.',

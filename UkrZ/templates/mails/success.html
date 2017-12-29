@@ -7,11 +7,14 @@
     <p>Появились свободные места по Вашему запросу "{{ station_from }} - {{ station_till }} {{ date_dep }}"</p>
     <hr>
     {% for result in results %}
-        <p>Поезд <b>{{ result.train }}</b></p>
-        <p>Дата отправления <b>{{ result.date_from|date:"d.m.Y H:i" }}</b></p>
-        <p>Дата прибытия <b>{{ result.date_till|date:"d.m.Y H:i" }}</b></p>
-        <p>Вагон <b>{{ result.carriage }}</b></p>
-        <p>Мест{{ result.coaches|pluralize:"а,о" }}: <b>{{ result.coaches }}</b></p><hr>
+        <p class="mb-0">Поезд <b>{{ result.train }}</b></p>
+        <p class="mb-0">Дата отправления <b>{{ result.date_from|date:"d.m.Y H:i" }}</b></p>
+        <p class="mb-0">Дата прибытия <b>{{ result.date_till|date:"d.m.Y H:i" }}</b></p>
+        {% for carriage in result.carriages.all %}
+            <p class="mb-0">Вагон №<b>{{ carriage.number }}</b></p>
+            <p class="mb-0 pl-3">Места: <b>{{ carriage.coaches }}</b></p>
+        {% endfor %}
+        <br>
     {% endfor %}
 </body>
 </html>
