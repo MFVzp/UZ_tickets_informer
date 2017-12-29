@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult
 from search_app import utils
-from .uz import Direction
+from .uz import Direction, TrainException
 
 
 @app.task
@@ -31,20 +31,23 @@ def mail_to(subject: str, text: str, address: list, html_message: str=None) -> s
 @app.task
 def looking_for_coaches(search_id: int):
     search = SearchingInfo.objects.get(id=search_id)
-    message = 'Поиск {} не актуальный.'.format(search)
-    direction = Direction(
-        city_from=search.station_from,
-        city_till=search.station_till,
-        date_dep=search.date_dep,
-        coach_type=search.coach_type
-    )
-    date_dep = utils.get_date_from_string(search.date_dep)
-    while search.is_actual:
-        try:
+    try:
+        message = 'Поиск {} не актуальный.'.format(search)
+        direction = Direction(
+            city_from=search.station_from,
+            city_till=search.station_till,
+            date_dep=search.date_dep,
+            coach_type=search.coach_type
+        )
+        date_dep = utils.get_date_from_string(search.date_dep)
+        amount_of_coaches = search.amount_of_coaches
+        get_good = search.get_good or search.get_best
+        get_best = search.get_best
+        while search.is_actual:
             if date_dep < timezone.localdate():
                 message = 'Дата отправления для направления "{} - {}" прошла. Поиск был остановлен.'.format(
-                    search.station_from,
-                    search.station_till
+                    direction.station_from.name,
+                    direction.station_till.name
                 )
                 FailResult.objects.create(
                     searching_info=search,
@@ -53,34 +56,30 @@ def looking_for_coaches(search_id: int):
                 search.is_actual = False
                 search.save()
                 break
-            coaches = direction.get_good_coaches()
-            if coaches and not isinstance(coaches, str):
-                for train in coaches:
-                    best_carriage = [0, [], math.inf]
-                    for carriage in train['carriages']:
-                        if len(carriage['coaches']) >= search.amount_of_coaches:
-                            best_coaches = utils.get_best_of_the_best(carriage['coaches'], search.amount_of_coaches)
-                            if best_coaches[-1] < best_carriage[-1]:
-                                best_carriage = [carriage['number'], ]
-                                best_carriage.extend(best_coaches)
-                    if best_carriage[0]:
-                        SuccessResult.objects.create(
-                            train=train['train'],
-                            date_from=train.get('date_from'),
-                            date_till=train.get('date_till'),
-                            carriage=best_carriage[0],
-                            coaches=', '.join(best_carriage[1]),
-                            searching_info=search
-                        )
-                        search.is_actual = False
-                        search.save()
-                        message = 'Success'
-            else:
+
+            try:
+                direction.run()
+            except TrainException:
                 time.sleep(10)
-        except Exception as e:
-            search.is_actual = False
-            search.save()
-            raise e
+                continue
+            trains = direction.get_trains(amount=amount_of_coaches, get_good=get_good, get_best=get_best)
+            if trains:
+                for train in trains:
+                    SuccessResult.objects.create(
+                        train=train.number,
+                        date_from=train.datetime_from,
+                        date_till=train.datetime_till,
+                        carriage=train.carriages[0],
+                        coaches=', '.join(train.carriages[0].coaches),
+                        searching_info=search
+                    )
+                    search.is_actual = False
+                    search.save()
+                    message = 'Success'
+    except Exception as e:
+        search.is_actual = False
+        search.save()
+        raise e
     if search.success_results.all().exists():
         context = {
             'station_from': search.station_from,

@@ -30,7 +30,7 @@
                                 <p class="mb-0">Поезд <b>{{ result.train }}</b></p>
                                 <p class="mb-0">Дата отправления <b>{{ result.date_from|date:"d.m.Y H:i" }}</b></p>
                                 <p class="mb-0">Дата прибытия <b>{{ result.date_till|date:"d.m.Y H:i" }}</b></p>
-                                <p class="mb-0">Вагон <b>№{{ result.carriage }}</b></p>
+                                <p class="mb-0">Вагон <b>{{ result.carriage }}</b></p>
                                 <p>Мест{{ result.coaches|pluralize:"а,о" }}: <b>{{ result.coaches }}</b></p>
                             {% endfor %}
                         {% else %}

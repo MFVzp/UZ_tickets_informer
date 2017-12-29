@@ -1,8 +1,13 @@
 # coding: utf-8
 import datetime
 import time
+import math
+import copy
 
 import requests
+
+
+GOOD_NUMBERS = list(range(5, 32, 2))
 
 
 class TrainException(Exception):
@@ -14,7 +19,7 @@ class TrainException(Exception):
 class Station:
 
     def __init__(self, direction, name: str):
-        stations = Direction.make_request(
+        stations = Direction._make_request(
             direction,
             resource='purchase/station/',
             params={'term': name},
@@ -58,11 +63,10 @@ class Train:
             setattr(self, key, value)
 
     def __str__(self):
-        return '\nПоезд №{} {} - {}\nВагоны:\n\t{}'.format(
+        return '{} {} - {}'.format(
             self.number,
             self.end_station_from,
-            self.end_station_till,
-            '\n\t'.join([carriage.__str__() for carriage in self.carriages])
+            self.end_station_till
         )
 
 
@@ -84,10 +88,7 @@ class Carriage:
             setattr(self, key, value)
 
     def __str__(self):
-        return '№{}, места: {}'.format(
-            self.number,
-            ', '.join(self.coaches)
-        )
+        return '№{}'.format(self.number)
 
 
 class Direction:
@@ -105,17 +106,17 @@ class Direction:
         self.date_dep = date_dep
         self.coach_type = coach_type
         self.trains = list()
+        self.trains_with_good_coaches = list()
 
     def __str__(self):
-        return 'Направление {} - {} | Дата: {} | Тип мест: {}\n\n{}'.format(
+        return 'Направление {} - {} | Дата: {} | Тип мест: {}'.format(
             self.station_from,
             self.station_till,
             self.date_dep,
-            self.coach_type,
-            '\n'.join([train.__str__() for train in self.trains])
+            self.coach_type
         )
 
-    def make_request(self, resource, data=None, params=None, method='GET', headers=None):
+    def _make_request(self, resource, data=None, params=None, method='GET', headers=None):
         url = self.url + resource
         response = requests.request(
             method=method,
@@ -138,8 +139,8 @@ class Direction:
             )
         return response
 
-    def get_trains(self):
-        trains = self.make_request(
+    def _get_trains(self):
+        trains = self._make_request(
             method='POST',
             resource='purchase/search/',
             data={
@@ -159,8 +160,8 @@ class Direction:
             )
         return self.trains
 
-    def add_carriages(self, train):
-        carriages = self.make_request(
+    def _add_carriages(self, train):
+        carriages = self._make_request(
             method='POST',
             resource='purchase/coaches/',
             data={
@@ -174,8 +175,8 @@ class Direction:
         for carriage in carriages:
             train.carriages.append(Carriage.from_dict(data=carriage))
 
-    def add_coaches(self, train, carriage):
-        coaches = self.make_request(
+    def _add_coaches(self, train, carriage):
+        coaches = self._make_request(
             method='POST',
             resource='purchase/coach/',
             data={
@@ -189,16 +190,79 @@ class Direction:
         ).get('value', {}).get('places', {}).values()
         [carriage.coaches.extend(coach) for coach in coaches]
 
+    @staticmethod
+    def _sum_of_odds(numbers_list):
+        if len(numbers_list) > 1:
+            res = 0
+            for i in range(len(numbers_list[:-1])):
+                res += numbers_list[i + 1] - numbers_list[i]
+            return res
+        return 0
+
+    @staticmethod
+    def _get_best(coaches_list, amount):
+        the_best_combination = {
+            'combination': (0, 0),
+            'difference': math.inf
+        }
+        for i in range(len(coaches_list[:len(coaches_list) + 1 - amount])):
+            combination = (coaches_list[i:i + amount], (i, i + amount))
+            difference_between_coaches = Direction._sum_of_odds(list(map(int, combination[0])))
+            if difference_between_coaches < the_best_combination['difference']:
+                the_best_combination['combination'] = combination[1]
+                the_best_combination['difference'] = difference_between_coaches
+        return the_best_combination
+
     def run(self, date_dep=None):
+        self.trains.clear()
+        self.trains_with_good_coaches.clear()
         if date_dep:
             self.date_dep = date_dep
-            self.trains.clear()
-        trains = self.get_trains()
+        trains = self._get_trains()
         if trains:
             for train in trains:
-                self.add_carriages(train)
+                self._add_carriages(train)
                 for carriage in train.carriages:
-                    self.add_coaches(train, carriage)
+                    self._add_coaches(train, carriage)
+
+    def get_trains(self, amount: int=0, get_good: bool=False, get_best: bool=False):
+        if get_good:
+            self.trains_with_good_coaches = copy.deepcopy(self.trains)
+
+            for train_i in reversed(range(len(self.trains))):
+                for carriage_i in reversed(range(len(self.trains[train_i].carriages))):
+                    for coach_i in reversed(range(len(self.trains[train_i].carriages[carriage_i].coaches))):
+                        if int(self.trains[train_i].carriages[carriage_i].coaches[coach_i]) not in GOOD_NUMBERS:
+                            self.trains_with_good_coaches[train_i].carriages[carriage_i].coaches.pop(coach_i)
+                    carriage = self.trains_with_good_coaches[train_i].carriages[carriage_i]
+                    if not carriage.coaches or (len(carriage.coaches) < amount):
+                        self.trains_with_good_coaches[train_i].carriages.pop(carriage_i)
+                train = self.trains_with_good_coaches[train_i]
+                if not train.carriages:
+                    self.trains_with_good_coaches.pop(train_i)
+
+            if get_best:
+                for train_i in reversed(range(len(self.trains_with_good_coaches))):
+                    train = self.trains_with_good_coaches[train_i]
+                    train_best_combination = {
+                        'carriage_i': 0,
+                        'difference': math.inf
+                    }
+                    for carriage_i in reversed(range(len(train.carriages))):
+                        carriage = train.carriages[carriage_i]
+                        carriage_best_combination = Direction._get_best(
+                            carriage.coaches,
+                            amount
+                        )
+                        combination = carriage_best_combination['combination']
+                        carriage.coaches = carriage.coaches[combination[0]:combination[1]]
+                        if carriage_best_combination['difference'] < train_best_combination['difference']:
+                            train_best_combination['carriage_i'] = carriage_i
+                            train_best_combination['difference'] = carriage_best_combination['difference']
+                    best_carriage_index = train_best_combination['carriage_i']
+                    train.carriages = train.carriages[best_carriage_index:best_carriage_index+1]
+            return self.trains_with_good_coaches
+        return self.trains
 
     def get_info(self):
         return self.__str__()

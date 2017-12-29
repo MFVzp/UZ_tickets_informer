@@ -10,7 +10,7 @@
         <p>Поезд <b>{{ result.train }}</b></p>
         <p>Дата отправления <b>{{ result.date_from|date:"d.m.Y H:i" }}</b></p>
         <p>Дата прибытия <b>{{ result.date_till|date:"d.m.Y H:i" }}</b></p>
-        <p>Вагон <b>№{{ result.carriage }}</b></p>
+        <p>Вагон <b>{{ result.carriage }}</b></p>
         <p>Мест{{ result.coaches|pluralize:"а,о" }}: <b>{{ result.coaches }}</b></p><hr>
     {% endfor %}
 </body>
