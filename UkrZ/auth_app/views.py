@@ -36,8 +36,8 @@ def invite_view(request):
         }
         mail_to.delay(
             subject='Приглашение на регистрацию.',
-            text=render_to_string('invite.txt', context=context, ),
-            address=[invite.email, ],
+            message=render_to_string('invite.txt', context=context, ),
+            recipient_list=[invite.email, ],
             html_message=render_to_string('invite.html', context=context, )
         )
         return redirect('search:list')

@@ -16,6 +16,17 @@ from .uz import Direction, TrainException
 
 
 @app.task
+def mail_to(subject: str, message: str, recipient_list: list, html_message: str=None):
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=recipient_list,
+        html_message=html_message
+    )
+
+
+@app.task
 def send_result(search_id: int) -> str:
     search = SearchingInfo.objects.get(id=search_id)
     context = {
@@ -26,7 +37,7 @@ def send_result(search_id: int) -> str:
         'uz_url': settings.UZ_HOST
     }
     user = search.author
-    send_mail(
+    mail_to.delay(
         subject='Билеты успешно найдены.',
         message=render_to_string('success.txt', context=context),
         from_email=settings.EMAIL_HOST_USER,

@@ -69,7 +69,7 @@ class AuthRegisterForm(forms.ModelForm):
         return password2
 
     def clean_tel_number(self):
-        tel_number = self.cleaned_data.get("tel_number")
+        tel_number = str(self.cleaned_data.get("tel_number"))
         if not re.match(r'\+380\d{7}', tel_number):
             raise forms.ValidationError('Введите телефон в формате "+380987654321"')
         return tel_number
