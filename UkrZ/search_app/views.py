@@ -3,13 +3,11 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
+from django.conf import settings
 
 from .models import SearchingInfo
 from .forms import SearchForm
 from .tasks import looking_for_coaches
-
-
-MAX_ACTIVE_SEARCHES_PER_USER = 3
 
 
 class SearchListView(LoginRequiredMixin, generic.ListView):
@@ -39,7 +37,7 @@ class AddSearchView(LoginRequiredMixin, generic.CreateView):
             author=user,
             is_actual=True
         )
-        if active_user_searches.count() >= MAX_ACTIVE_SEARCHES_PER_USER:
+        if active_user_searches.count() >= settings.MAX_ACTIVE_SEARCHES_PER_USER:
             return HttpResponse('Вы достигли максимального чиста активных запросов'.encode())
         else:
             instance = form.save(commit=False)
@@ -47,3 +45,14 @@ class AddSearchView(LoginRequiredMixin, generic.CreateView):
             instance.save()
             looking_for_coaches.delay(instance.id)
             return super(AddSearchView, self).form_valid(form)
+
+
+class InstructionsView(LoginRequiredMixin, generic.TemplateView):
+    login_url = reverse_lazy('auth:login')
+    success_url = reverse_lazy('search:list')
+    template_name = 'instructions.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(InstructionsView, self).get_context_data()
+        context['amount_of_searching'] = settings.MAX_ACTIVE_SEARCHES_PER_USER
+        return context

@@ -14,7 +14,7 @@ def send_viber_message(text, user_id=None, viber_user_id=None):
         if user_id:
             user = get_user_model().objects.get(id=user_id)
             viber_user_id = user.viber_id
-        else:
+        elif not viber_user_id:
             raise ValueError('User with id={} does not have viber id.'.format(user_id))
     viber = Api(
         BotConfiguration(
