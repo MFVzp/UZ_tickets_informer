@@ -87,7 +87,10 @@ def looking_for_coaches(search_id: int):
             if trains:
                 for train in trains:
                     result = SuccessResult.objects.create(
-                        train=train.number,
+                        train='{} (время в пути {})'.format(
+                            train.number,
+                            train.travel_time
+                        ),
                         date_from=train.datetime_from,
                         date_till=train.datetime_till,
                         searching_info=search

@@ -41,7 +41,7 @@ class SearchForm(forms.ModelForm):
 
     def clean_date_dep(self):
         date_dep = self.cleaned_data.get('date_dep')
-        if not re.match(r'\d{2}.\d{2}.\d{4}', date_dep):
+        if not re.match(r'\d{2}\.\d{2}\.\d{4}', date_dep):
             raise forms.ValidationError('Вы ввели неправильную дату. Введите дату еще раз в формате "дд.мм.гггг"')
         try:
             date_dep_in_date_format = utils.get_date_from_string(date_dep)
