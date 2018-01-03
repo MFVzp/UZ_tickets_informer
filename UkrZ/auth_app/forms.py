@@ -80,3 +80,14 @@ class AuthRegisterForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class AuthEditForm(forms.ModelForm):
+
+    class Meta:
+        model = MyUser
+        fields = (
+            'tel_number',
+            'first_name',
+            'last_name',
+        )

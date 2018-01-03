@@ -12,7 +12,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from .forms import AuthLoginForm, AuthRegisterForm, InviteForm
+from .forms import AuthLoginForm, AuthRegisterForm, InviteForm, AuthEditForm
 from .models import Invite
 from search_app.tasks import mail_to
 from viber_app.tasks import send_viber_message
@@ -22,6 +22,7 @@ class Action(Enum):
     LOGIN = 'Войти'
     REGISTER = 'Зарегистрироваться'
     INVITE = 'Пригласить'
+    EDIT = 'Изменить профиль'
 
 
 def invite_view(request):
@@ -99,13 +100,13 @@ def register_view(request):
         with transaction.atomic():
             user.save()
             invite.delete()
-            send_viber_message.delay(
-                viber_user_id=settings.SUPERUSER_VIBER_ID,
-                text='User {} with number {} was registered.'.format(
-                    user,
-                    user.tel_number
-                )
+        send_viber_message.delay(
+            viber_user_id=settings.SUPERUSER_VIBER_ID,
+            text='User {} with number {} was registered.'.format(
+                user,
+                user.tel_number
             )
+        )
         if user is not None:
             login(request, user)
         return redirect('search:list')
@@ -113,5 +114,21 @@ def register_view(request):
         'code': code,
         'form': form,
         'action': Action.REGISTER.value,
+    }
+    return render(request, 'form.html', context)
+
+
+@login_required(login_url=reverse_lazy('auth:login'))
+def edit_profile_view(request):
+    form = AuthEditForm(
+        request.POST or None,
+        instance=request.user
+    )
+    if form.is_valid():
+        user = form.save()
+        return redirect('search:list')
+    context = {
+        'form': form,
+        'action': Action.EDIT.value,
     }
     return render(request, 'form.html', context)

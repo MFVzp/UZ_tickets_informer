@@ -32,10 +32,18 @@
                 {% endif %}
                 {% if user.is_authenticated %}
                     <li class="nav-item navbar-text">
-                        <div>Вы вошли как <a href="#">{{ user.get_full_name }}</a></div>
-                    </li>
-                    <li class="nav-item">
-                        <div><a href="{% url 'auth:logout' %}" class="nav-link">Выйти</a></div>
+                        <div>
+                            <div class="dropdown">
+                                Вы вошли как
+                                <a href="#" class="text-info dropdown-toggle mr-5" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {{ user.get_full_name }}
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+                                    <a href="{% url 'auth:edit_profile' %}" class="dropdown-item">Редактировать профиль</a>
+                                    <a href="{% url 'auth:logout' %}" class="dropdown-item">Выйти</a>
+                                </div>
+                            </div>
+                        </div>
                     </li>
                 {% else %}
                     <li class="nav-item">
