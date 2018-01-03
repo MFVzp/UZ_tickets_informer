@@ -5,14 +5,12 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
-from viberbot import Api
-from viberbot.api.bot_configuration import BotConfiguration
-from viberbot.api.messages import TextMessage
 
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult, Carriage
 from search_app import utils
 from .uz import Direction, TrainException
+from viber_app.tasks import send_viber_message
 
 
 @app.task
@@ -40,19 +38,13 @@ def send_result(search_id: int) -> str:
     mail_to.delay(
         subject='Билеты успешно найдены.',
         message=render_to_string('success.txt', context=context),
-        from_email=settings.EMAIL_HOST_USER,
         recipient_list=[user.email, ],
         html_message=render_to_string('success.html', context=context)
     )
-    bot_configuration = BotConfiguration(
-        name='PythonSampleBot',
-        auth_token=settings.VIBER_AUTH_TOKEN
+    send_viber_message.delay(
+        text=render_to_string('success.txt', context=context),
+        user_id=user.id
     )
-    viber = Api(bot_configuration)
-    #account_info = viber.get_account_info()
-    # Получение user.viber_id
-    #viber.id = '123456789'
-    #viber.send_messages()
 
     return 'I sent email and Viber message to {}.'.format(user.username)
 

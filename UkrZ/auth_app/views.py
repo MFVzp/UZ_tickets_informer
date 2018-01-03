@@ -10,10 +10,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.db import transaction
 from django.template.loader import render_to_string
+from django.conf import settings
 
 from .forms import AuthLoginForm, AuthRegisterForm, InviteForm
 from .models import Invite
 from search_app.tasks import mail_to
+from viber_app.tasks import send_viber_message
 
 
 class Action(Enum):
@@ -97,6 +99,13 @@ def register_view(request):
         with transaction.atomic():
             user.save()
             invite.delete()
+            send_viber_message.delay(
+                viber_user_id=settings.SUPERUSER_VIBER_ID,
+                text='User {} with number {} was registered.'.format(
+                    user,
+                    user.tel_number
+                )
+            )
         if user is not None:
             login(request, user)
         return redirect('search:list')

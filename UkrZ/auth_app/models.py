@@ -48,6 +48,14 @@ class MyUser(AbstractUser):
         null=True,
         blank=True
     )
+    viber_id = models.CharField(
+        max_length=64,
+        null=True
+    )
+    viber_secret_message = models.CharField(
+        max_length=CODE_LEN,
+        default=get_random_code
+    )
 
 
 class Invite(models.Model):
