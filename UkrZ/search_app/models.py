@@ -26,7 +26,7 @@ class SearchingInfo(models.Model):
     get_best = models.BooleanField('Искать только лучшие', default=False)
 
     class Meta:
-        ordering = ['is_actual', '-create_date']
+        ordering = ['date_dep_in_datetime_format']
 
     def __str__(self):
         return '{} >> {} {}'.format(
@@ -68,6 +68,6 @@ class FailResult(models.Model):
 @receiver(post_save, sender=SearchingInfo)
 def add_date_dep_in_datetime_format(sender, **kwargs):
     instance = kwargs.get('instance')
-    if not instance.date_dep:
+    if not instance.date_dep_in_datetime_format:
         instance.date_dep_in_datetime_format = get_date_from_string(instance.date_dep)
         instance.save()

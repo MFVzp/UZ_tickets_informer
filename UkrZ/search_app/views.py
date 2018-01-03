@@ -2,10 +2,13 @@
 from django.views import generic
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.conf import settings
+from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import redirect
 
-from .models import SearchingInfo
+from .models import SearchingInfo, FailResult
 from .forms import SearchForm
 from .tasks import looking_for_coaches
 
@@ -15,6 +18,7 @@ class SearchListView(LoginRequiredMixin, generic.ListView):
     model = SearchingInfo
     template_name = 'searching_list.html'
     context_object_name = 'search_list'
+    paginate_by = 3
 
     def get_queryset(self):
         queryset = SearchingInfo.objects.filter(
@@ -56,3 +60,20 @@ class InstructionsView(LoginRequiredMixin, generic.TemplateView):
         context = super(InstructionsView, self).get_context_data()
         context['amount_of_searching'] = settings.MAX_ACTIVE_SEARCHES_PER_USER
         return context
+
+
+class StopSearchingView(generic.View):
+
+    def post(self, request, *args, **kwargs):
+        try:
+            searching_info = SearchingInfo.objects.get(id=request.POST.get('id'))
+        except ObjectDoesNotExist:
+            return HttpResponseForbidden
+        with transaction.atomic():
+            FailResult.objects.create(
+                searching_info=searching_info,
+                fail_message='Вы остановили данный поиск.'
+            )
+            searching_info.is_actual = False
+            searching_info.save()
+        return redirect('search:list')

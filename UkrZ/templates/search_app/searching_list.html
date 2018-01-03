@@ -20,11 +20,17 @@
             <tbody>
                 <tr>
                     {% if search.is_actual %}
-                        <td class="bg-success text-white">В работе</td>
+                        <td class="bg-success text-white align-middle">
+                            <form action="{% url 'search:stop_search' %}" method="POST">{% csrf_token %}
+                                <input name="id" value="{{ search.id }}" hidden readonly>
+                                <input type="submit" class="text-danger float-right" value="остановить">
+                            </form>
+                            В работе
+                        </td>
                     {% else %}
                         <td class="text-left">
                         {% if search.fail_result %}
-                            search.fail_result.fail_message
+                            {{ search.fail_result.fail_message }}
                         {% elif search.success_results.all %}
                             {% for result in search.success_results.all %}
                                 <p class="mb-0">Поезд <b>{{ result.train }}</b></p>
@@ -50,6 +56,16 @@
             </tbody>
             {% endfor %}
         </table>
+    {% if is_paginated %}
+        <div class="my-5 text-center">
+            {% if page_obj.has_previous %}
+                <a href="{% url 'search:list' %}?page={{ page_obj.previous_page_number }}">пред.</a>
+            {% endif %}
+            {{ page_obj.number }} из {{ paginator.num_pages }}
+            {% if page_obj.has_next %}
+                <a href="{% url 'search:list' %}?page={{ page_obj.next_page_number }}">след.</a></div>
+            {% endif %}
+    {% endif %}
     {% else %}
         <h2 class="text-center mt-5">Нет запросов. Хотите ли Вы <a href="{% url 'search:add' %}">создать</a> запрос?</h2>
     {% endif %}
