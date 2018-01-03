@@ -87,6 +87,7 @@ class AuthEditForm(forms.ModelForm):
     class Meta:
         model = MyUser
         fields = (
+            'email',
             'tel_number',
             'first_name',
             'last_name',

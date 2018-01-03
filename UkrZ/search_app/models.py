@@ -1,6 +1,10 @@
 # coding: utf-8
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from .utils import get_date_from_string
 
 
 class SearchingInfo(models.Model):
@@ -8,6 +12,7 @@ class SearchingInfo(models.Model):
     station_from = models.CharField('Станция отправления', max_length=50)
     station_till = models.CharField('Станция назначения', max_length=50)
     date_dep = models.CharField('Дата отправления', max_length=10)
+    date_dep_in_datetime_format = models.DateField(null=True)
     COACHES_TYPES = (
         ('П', 'Плацкарт'),
         ('К', 'Купе'),
@@ -58,3 +63,11 @@ class FailResult(models.Model):
     searching_info = models.OneToOneField(SearchingInfo, on_delete=models.CASCADE, related_name='fail_result')
     fail_message = models.TextField()
     create_date = models.DateField(auto_now_add=True)
+
+
+@receiver(post_save, sender=SearchingInfo)
+def add_date_dep_in_datetime_format(sender, **kwargs):
+    instance = kwargs.get('instance')
+    if not instance.date_dep:
+        instance.date_dep_in_datetime_format = get_date_from_string(instance.date_dep)
+        instance.save()

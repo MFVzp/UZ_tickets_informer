@@ -8,9 +8,14 @@ from django.template.loader import render_to_string
 
 from UkrZ.celery import app
 from .models import SearchingInfo, SuccessResult, FailResult, Carriage
-from search_app import utils
 from .uz import Direction, TrainException
 from viber_app.tasks import send_viber_message
+
+
+@app.task
+def clean_past_searching_info():
+    deleted = SearchingInfo.objects.filter(date_dep_in_datetime_format__lt=timezone.localdate()).delete()
+    return 'Deleted {} pasted SearchingInfo'.format(len(deleted))
 
 
 @app.task
@@ -60,7 +65,7 @@ def looking_for_coaches(search_id: int):
             date_dep=search.date_dep,
             coach_type=search.coach_type
         )
-        date_dep = utils.get_date_from_string(search.date_dep)
+        date_dep = search.date_dep_in_datetime_format
         amount_of_coaches = search.amount_of_coaches
         get_good = search.get_good or search.get_best
         get_best = search.get_best

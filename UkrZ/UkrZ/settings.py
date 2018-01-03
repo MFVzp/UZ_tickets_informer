@@ -158,4 +158,8 @@ app.conf.beat_schedule = {
         'task': 'auth_app.tasks.clean_expired_invites',
         'schedule': datetime.timedelta(days=1),
     },
+    'clear-past-searching-info-every-day': {
+        'task': 'search_app.tasks.clean_past_searching_info',
+        'schedule': datetime.timedelta(days=1),
+    },
 }
