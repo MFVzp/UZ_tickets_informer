@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import datetime
+
+import dj_database_url
+
 from .celery import app
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -92,6 +95,8 @@ DATABASES = {
     }
 }
 
+db_from_env = dj_database_url.config()
+DATABASES['default'].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -133,10 +138,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
+STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 # UkrZ settings
 
@@ -146,9 +154,16 @@ UZ_HOST = 'https://booking.uz.gov.ua/ru/'
 # Email and Viber settings
 
 try:
-    from settings import *
+    from prod_settings import *
 except ImportError:
-    pass
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
+    MAX_ACTIVE_SEARCHES_PER_USER = os.environ.get('MAX_ACTIVE_SEARCHES_PER_USER')
+    VIBER_AUTH_TOKEN = os.environ.get('VIBER_AUTH_TOKEN')
+    SUPERUSER_VIBER_ID = os.environ.get('SUPERUSER_VIBER_ID')
 
 
 # Celery configurations

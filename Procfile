@@ -1,0 +1,1 @@
+web: gunicorn UkrZ.wsgi --log-file -
