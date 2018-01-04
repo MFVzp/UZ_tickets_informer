@@ -1,5 +1,22 @@
 var options = {
-	data: ["blue", "green", "pink", "red", "yellow"]
+
+  url: function(phrase) {
+    return "/observe/proxy_stations?term=" + phrase;
+  },
+
+  getValue: function(element) {
+    return element.title;
+  },
+
+  ajaxSettings: {
+    method: "GET",
+    data: {
+      dataType: "json"
+    }
+  },
+
+  requestDelay: 400
 };
 
-$("#countries").easyAutocomplete(options);
+$("#id_station_from").easyAutocomplete(options);
+$("#id_station_till").easyAutocomplete(options);

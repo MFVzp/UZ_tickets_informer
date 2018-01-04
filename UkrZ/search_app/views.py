@@ -1,8 +1,10 @@
 # coding: utf-8
+import requests
+
 from django.views import generic
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -77,3 +79,11 @@ class StopSearchingView(generic.View):
             searching_info.is_actual = False
             searching_info.save()
         return redirect('search:list')
+
+
+def proxy_stations_view(request):
+    if request.is_ajax():
+        response = requests.get(settings.UZ_HOST + 'purchase/station/?' + request.META.get('QUERY_STRING')).json()
+        return JsonResponse(response, safe=False)
+    else:
+        return HttpResponseForbidden()
