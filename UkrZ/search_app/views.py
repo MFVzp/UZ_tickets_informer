@@ -70,7 +70,7 @@ class StopSearchingView(generic.View):
         except ObjectDoesNotExist:
             return HttpResponseForbidden
         with transaction.atomic():
-            FailResult.objects.create(
+            FailResult.objects.get_or_create(
                 searching_info=searching_info,
                 fail_message='Вы остановили данный поиск.'
             )
