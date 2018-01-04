@@ -7,7 +7,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UkrZ.settings')
 
 app = Celery(
     'UkrZ',
-    broker='amqp://')
+    broker='redis://')
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
