@@ -29,6 +29,10 @@
                         </td>
                     {% else %}
                         <td class="text-left">
+                            <form action="{% url 'search:delete_search' %}" method="POST">{% csrf_token %}
+                                <input name="id" value="{{ search.id }}" hidden readonly>
+                                <input type="submit" class="text-danger float-right" value="удалить">
+                            </form>
                         {% if search.fail_result %}
                             {{ search.fail_result.fail_message }}
                         {% elif search.success_results.all %}

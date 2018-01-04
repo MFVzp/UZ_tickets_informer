@@ -4,7 +4,7 @@ import requests
 from django.views import generic
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -66,11 +66,11 @@ class InstructionsView(LoginRequiredMixin, generic.TemplateView):
 
 class StopSearchingView(generic.View):
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         try:
-            searching_info = SearchingInfo.objects.get(id=request.POST.get('id'))
+            searching_info = SearchingInfo.objects.get(id=self.request.POST.get('id'))
         except ObjectDoesNotExist:
-            return HttpResponseForbidden
+            return HttpResponseBadRequest
         with transaction.atomic():
             FailResult.objects.get_or_create(
                 searching_info=searching_info,
@@ -81,9 +81,20 @@ class StopSearchingView(generic.View):
         return redirect('search:list')
 
 
+class DeleteSearchingView(generic.View):
+
+    def post(self, *args, **kwargs):
+        try:
+            searching_info = SearchingInfo.objects.get(id=self.request.POST.get('id'))
+            searching_info.delete()
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest
+        return redirect('search:list')
+
+
 class ProxyStationsView(LoginRequiredMixin, generic.View):
 
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         if self.request.is_ajax():
             response = requests.get(settings.UZ_HOST + 'purchase/station/?' + self.request.META.get('QUERY_STRING')).json()
             return JsonResponse(response, safe=False)

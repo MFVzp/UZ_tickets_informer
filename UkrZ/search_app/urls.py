@@ -8,5 +8,6 @@ urlpatterns = [
     path('add', AddSearchView.as_view(), name='add'),
     path('instructions', InstructionsView.as_view(), name='instructions'),
     path('stop', StopSearchingView.as_view(), name='stop_search'),
+    path('delete', DeleteSearchingView.as_view(), name='delete_search'),
     path('proxy_stations', ProxyStationsView.as_view(), name='proxy_stations')
 ]
