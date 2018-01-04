@@ -81,9 +81,11 @@ class StopSearchingView(generic.View):
         return redirect('search:list')
 
 
-def proxy_stations_view(request):
-    if request.is_ajax():
-        response = requests.get(settings.UZ_HOST + 'purchase/station/?' + request.META.get('QUERY_STRING')).json()
-        return JsonResponse(response, safe=False)
-    else:
-        return HttpResponseForbidden()
+class ProxyStationsView(LoginRequiredMixin, generic.View):
+
+    def get(self, request, *args, **kwargs):
+        if self.request.is_ajax():
+            response = requests.get(settings.UZ_HOST + 'purchase/station/?' + self.request.META.get('QUERY_STRING')).json()
+            return JsonResponse(response, safe=False)
+        else:
+            return HttpResponseForbidden()
