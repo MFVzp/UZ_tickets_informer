@@ -7,10 +7,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UkrZ.settings')
 
 app = Celery(
     'UkrZ',
-    broker='sqs://{}:{}'.format(
-        os.environ.get('AWS_ACCESS_KEY_ID'),
-        os.environ.get('AWS_SECRET_ACCESS_KEY')
-    ))
+    broker=os.environ.get('CELERY_BROKER')
+)
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
