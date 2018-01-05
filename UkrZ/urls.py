@@ -21,6 +21,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('auth_app.urls', namespace='auth')),
-    path('observe/', include('search_app.urls', namespace='search')),
     path('viber/', include('viber_app.urls', namespace='viber')),
+    path('', include('search_app.urls', namespace='search')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

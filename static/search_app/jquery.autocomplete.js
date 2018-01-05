@@ -1,7 +1,7 @@
 var options = {
 
   url: function(phrase) {
-    return "/observe/proxy_stations?term=" + phrase;
+    return "/proxy_stations?term=" + phrase;
   },
 
   getValue: function(element) {
