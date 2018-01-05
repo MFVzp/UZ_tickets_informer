@@ -24,12 +24,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '0u!z2*zq9$&q!!e=jyp7=_+iv58rl3&w@iron74($ymx*opjp&')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
-
 ALLOWED_HOSTS = [
     '*'
 ]
@@ -85,19 +79,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'UkrZ.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
-db_from_env = dj_database_url.config()
-DATABASES['default'].update(db_from_env)
-
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
@@ -151,21 +132,6 @@ STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 UZ_HOST = 'https://booking.uz.gov.ua/ru/'
 
 
-# Email and Viber settings
-
-try:
-    from prod_settings import *
-except ImportError:
-    EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
-    MAX_ACTIVE_SEARCHES_PER_USER = os.environ.get('MAX_ACTIVE_SEARCHES_PER_USER')
-    VIBER_AUTH_TOKEN = os.environ.get('VIBER_AUTH_TOKEN')
-    SUPERUSER_VIBER_ID = os.environ.get('SUPERUSER_VIBER_ID')
-
-
 # Celery configurations
 
 app.conf.beat_schedule = {
@@ -178,3 +144,41 @@ app.conf.beat_schedule = {
         'schedule': datetime.timedelta(days=1),
     },
 }
+
+
+# ENV Settings
+
+ENV = os.environ.get('ENV')
+if ENV == 'PROD':
+    from prod_settings import *
+elif ENV == 'DEV':
+    from dev_settings import *
+elif ENV == 'TEST':
+    from test_settings import *
+else:
+
+    # SECURITY WARNING: keep the secret key used in production secret!
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '0u!z2*zq9$&q!!e=jyp7=_+iv58rl3&w@iron74($ymx*opjp&')
+
+    # SECURITY WARNING: don't run with debug turned on in production!
+    DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
+
+    # Database
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+
+    db_from_env = dj_database_url.config()
+    DATABASES['default'].update(db_from_env)
+
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
+    MAX_ACTIVE_SEARCHES_PER_USER = os.environ.get('MAX_ACTIVE_SEARCHES_PER_USER')
+    VIBER_AUTH_TOKEN = os.environ.get('VIBER_AUTH_TOKEN')
+    SUPERUSER_VIBER_ID = os.environ.get('SUPERUSER_VIBER_ID')
