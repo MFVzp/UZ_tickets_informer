@@ -13,5 +13,16 @@
         {% endif %}
         <input type="submit" class="submit btn btn-success" value="{{ action }}"/>
     </form>
+    {% if invites %}
+    <h3>Разосланные приглашения</h3>
+        {% for invite in invites %}
+            <div class="align-text-bottom mt-4">{{ invite.email }}
+                <form action="{% url 'auth:invite' %}" method="POST" class="float-right">{% csrf_token %}
+                    <input name="invite_id" value="{{ invite.id }}" hidden readonly>
+                    <input type="submit" class="text-danger float-right" value="удалить">
+                </form>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
 {% endblock content %}

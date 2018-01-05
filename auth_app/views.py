@@ -44,10 +44,17 @@ def invite_view(request):
             html_message=render_to_string('invite.html', context=context, )
         )
         return redirect('search:list')
+    invite_id = request.POST.get('invite_id')
     context = {
-        'form': form,
-        'action': Action.INVITE.value,
+        'form': form
     }
+    if invite_id:
+        try:
+            Invite.objects.get(id=invite_id).delete()
+        finally:
+            context['form'] = InviteForm()
+    context['invites'] = Invite.objects.all()
+    context['action'] = Action.INVITE.value
     return render(request, 'form.html', context)
 
 
