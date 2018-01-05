@@ -38,7 +38,7 @@ class SearchingInfo(models.Model):
 
 class SuccessResult(models.Model):
     searching_info = models.ForeignKey(SearchingInfo, on_delete=models.CASCADE, related_name='success_results')
-    train = models.CharField(max_length=8)
+    train = models.CharField(max_length=128)
     date_from = models.DateTimeField()
     date_till = models.DateTimeField()
     create_date = models.DateField(auto_now_add=True)
@@ -52,7 +52,7 @@ class SuccessResult(models.Model):
 
 class Carriage(models.Model):
     success_result = models.ForeignKey(SuccessResult, on_delete=models.CASCADE, related_name='carriages')
-    number = models.CharField(max_length=2)
+    number = models.CharField(max_length=8)
     coaches = models.TextField()
 
     def __str__(self):
