@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from viberbot import Api
 from viberbot.api.bot_configuration import BotConfiguration
 from viberbot.api.viber_requests import ViberMessageRequest
@@ -14,7 +15,7 @@ from viberbot.api.messages import TextMessage
 viber = Api(BotConfiguration(
     name='Hooker bot',
     avatar='http://viber.com/avatar.jpg',
-    auth_token=os.environ.get('VIBER_TOKEN')
+    auth_token=settings.VIBER_AUTH_TOKEN
 ))
 
 
