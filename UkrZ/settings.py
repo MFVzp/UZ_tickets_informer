@@ -15,6 +15,8 @@ import datetime
 import typing as t
 import json
 
+import dj_database_url
+
 from .celery import app
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -168,7 +170,7 @@ def get_envvar(envvar: str, envtype: t.Any, required: bool = False, default: t.A
 
 # ENV Settings
 
-ENV = os.environ.get('ENV')
+ENV = get_envvar('ENV', str)
 if ENV == 'PROD':
     from prod_settings import *
 elif ENV == 'DEV':
@@ -190,6 +192,8 @@ else:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
+    db_from_env = dj_database_url.config()
+    DATABASES['default'].update(db_from_env)
 
     EMAIL_HOST = get_envvar('EMAIL_HOST', str, required=True)
     EMAIL_HOST_USER = get_envvar('EMAIL_HOST_USER', str, required=True)
