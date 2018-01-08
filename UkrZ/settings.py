@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import datetime
 
-import dj_database_url
-
 from .celery import app
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -171,9 +169,6 @@ else:
         }
     }
 
-    db_from_env = dj_database_url.config()
-    DATABASES['default'].update(db_from_env)
-
     EMAIL_HOST = os.environ.get('EMAIL_HOST')
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
@@ -182,3 +177,4 @@ else:
     MAX_ACTIVE_SEARCHES_PER_USER = os.environ.get('MAX_ACTIVE_SEARCHES_PER_USER')
     VIBER_AUTH_TOKEN = os.environ.get('VIBER_AUTH_TOKEN')
     SUPERUSER_VIBER_ID = os.environ.get('SUPERUSER_VIBER_ID')
+    CELERY_BROKER = os.environ.get('CELERY_BROKER', 'amqp://')
