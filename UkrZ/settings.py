@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import datetime
+import typing as t
+import json
 
 from .celery import app
 
@@ -144,6 +146,26 @@ app.conf.beat_schedule = {
 }
 
 
+def get_envvar(envvar: str, envtype: t.Any, required: bool = False, default: t.Any = None) -> t.Any:
+    try:
+        if envtype == bool:
+            if os.getenv(envvar):
+                value = True if os.getenv(envvar) == 'true' else False
+            else:
+                value = default
+        elif envtype == dict:
+            value = json.loads(os.getenv(envvar)) if os.getenv(envvar) else default
+        else:
+            value = envtype(os.getenv(envvar)) if os.getenv(envvar) else default
+    except ValueError:
+        if required:
+            raise ValueError('Config variable {} can\'t be assigned with type {}'.format(envvar, envtype))
+    else:
+        if value is None and required:
+            raise ValueError('Config variable {} is required'.format(envvar))
+        return value
+
+
 # ENV Settings
 
 ENV = os.environ.get('ENV')
@@ -169,12 +191,12 @@ else:
         }
     }
 
-    EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
-    MAX_ACTIVE_SEARCHES_PER_USER = os.environ.get('MAX_ACTIVE_SEARCHES_PER_USER')
-    VIBER_AUTH_TOKEN = os.environ.get('VIBER_AUTH_TOKEN')
-    SUPERUSER_VIBER_ID = os.environ.get('SUPERUSER_VIBER_ID')
-    CELERY_BROKER = os.environ.get('CELERY_BROKER', 'amqp://')
+    EMAIL_HOST = get_envvar('EMAIL_HOST', str, required=True)
+    EMAIL_HOST_USER = get_envvar('EMAIL_HOST_USER', str, required=True)
+    EMAIL_HOST_PASSWORD = get_envvar('EMAIL_HOST_PASSWORD', str, required=True)
+    EMAIL_PORT = get_envvar('EMAIL_PORT', int, required=True)
+    EMAIL_USE_TLS = get_envvar('EMAIL_USE_TLS', str, default=True)
+    MAX_ACTIVE_SEARCHES_PER_USER = get_envvar('MAX_ACTIVE_SEARCHES_PER_USER', int, required=True)
+    VIBER_AUTH_TOKEN = get_envvar('VIBER_AUTH_TOKEN', str, required=True)
+    SUPERUSER_VIBER_ID = get_envvar('SUPERUSER_VIBER_ID', str, required=True)
+    CELERY_BROKER = get_envvar('CELERY_BROKER', str, default='amqp://')
