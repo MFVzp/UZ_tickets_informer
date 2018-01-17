@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sys
 import datetime
 import typing as t
 import json
@@ -19,19 +20,40 @@ import dj_database_url
 
 from .celery import app
 
+
+def get_envvar(envvar: str, envtype: t.Any, required: bool = False, default: t.Any = None) -> t.Any:
+    try:
+        if envtype == bool:
+            if os.getenv(envvar):
+                value = True if os.getenv(envvar).lower() == 'true' else False
+            else:
+                value = default
+        elif envtype == dict:
+            value = json.loads(os.getenv(envvar)) if os.getenv(envvar) else default
+        else:
+            value = envtype(os.getenv(envvar)) if os.getenv(envvar) else default
+    except ValueError:
+        if required:
+            raise ValueError('Config variable {} can\'t be assigned with type {}'.format(envvar, envtype))
+    else:
+        if value is None and required:
+            raise ValueError('Config variable {} is required'.format(envvar))
+        return value
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
-ALLOWED_HOSTS = [
-    '*'
-]
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Application definition
+
+ALLOWED_HOSTS = [
+    '*'
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -43,6 +65,8 @@ INSTALLED_APPS = [
 
     'search_app',
     'auth_app',
+
+    'compressor',
 ]
 
 MIDDLEWARE = [
@@ -78,11 +102,11 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'UkrZ.wsgi.application'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
+
+WSGI_APPLICATION = 'UkrZ.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -99,11 +123,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'auth_app.MyUser'
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
+
+AUTH_USER_MODEL = 'auth_app.MyUser'
 
 LANGUAGE_CODE = 'en-us'
 
@@ -113,28 +137,17 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
-
-STATIC_URL = '/static/'
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
-
-STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 # UkrZ settings
 
-UZ_HOST = 'https://booking.uz.gov.ua/ru/'
+USE_TZ = True
 
 
 # Celery configurations
+
+UZ_HOST = 'https://booking.uz.gov.ua/ru/'
+
 
 app.conf.beat_schedule = {
     'clear-expired-invites-every-day': {
@@ -148,59 +161,61 @@ app.conf.beat_schedule = {
 }
 
 
-def get_envvar(envvar: str, envtype: t.Any, required: bool = False, default: t.Any = None) -> t.Any:
-    try:
-        if envtype == bool:
-            if os.getenv(envvar):
-                value = True if os.getenv(envvar) == 'true' else False
-            else:
-                value = default
-        elif envtype == dict:
-            value = json.loads(os.getenv(envvar)) if os.getenv(envvar) else default
-        else:
-            value = envtype(os.getenv(envvar)) if os.getenv(envvar) else default
-    except ValueError:
-        if required:
-            raise ValueError('Config variable {} can\'t be assigned with type {}'.format(envvar, envtype))
-    else:
-        if value is None and required:
-            raise ValueError('Config variable {} is required'.format(envvar))
-        return value
+SITE_DIR = get_envvar(
+    "SITE_DIR",
+    str,
+    default=os.path.abspath(os.path.join(BASE_DIR, '..', '..', '..'))
+)
+
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps', ))
+
+DEBUG = get_envvar("DJANGO_DEBUG", bool, default=False)
+
+DATABASES = {
+    'default': dj_database_url.parse(
+        get_envvar("DJANGO_DATABASE_URL", str, default="postgres://user:password@localhost:/database")
+    )
+}
 
 
-# ENV Settings
+STATIC_URL = '/static/'
 
-ENV = get_envvar('ENV', str)
-if ENV == 'PROD':
-    from prod_settings import *
-elif ENV == 'DEV':
-    from dev_settings import *
-elif ENV == 'TEST':
-    from test_settings import *
-else:
+STATIC_ROOT = get_envvar(
+    "DJANGO_STATIC_ROOT",
+    str,
+    default=os.path.abspath(os.path.join(SITE_DIR, 'htdocs', 'static')))
 
-    # SECURITY WARNING: keep the secret key used in production secret!
-    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '0u!z2*zq9$&q!!e=jyp7=_+iv58rl3&w@iron74($ymx*opjp&')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 
-    # SECURITY WARNING: don't run with debug turned on in production!
-    DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 
-    # Database
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-    }
-    db_from_env = dj_database_url.config()
-    DATABASES['default'].update(db_from_env)
+    'compressor.finders.CompressorFinder',
+)
 
-    EMAIL_HOST = get_envvar('EMAIL_HOST', str, required=True)
-    EMAIL_HOST_USER = get_envvar('EMAIL_HOST_USER', str, required=True)
-    EMAIL_HOST_PASSWORD = get_envvar('EMAIL_HOST_PASSWORD', str, required=True)
-    EMAIL_PORT = get_envvar('EMAIL_PORT', int, required=True)
-    EMAIL_USE_TLS = get_envvar('EMAIL_USE_TLS', str, default=True)
-    MAX_ACTIVE_SEARCHES_PER_USER = get_envvar('MAX_ACTIVE_SEARCHES_PER_USER', int, required=True)
-    VIBER_AUTH_TOKEN = get_envvar('VIBER_AUTH_TOKEN', str, required=True)
-    SUPERUSER_VIBER_ID = get_envvar('SUPERUSER_VIBER_ID', str, required=True)
-    CELERY_BROKER = get_envvar('CELERY_BROKER', str, default='amqp://')
+SECRET_KEY = get_envvar(
+    "DJANGO_SECRET_KEY",
+    str,
+    default='0u!z2*16894q!pz=jyphmz+iv1364dht51ucn74($ymx*opjp&'
+)
+
+CELERY_BROKER_URL = get_envvar(
+    "CELERY_BROKER_URL",
+    str,
+    default="amqp://guest:guest@localhost:5672//"
+)
+
+
+EMAIL_HOST = get_envvar('EMAIL_HOST', str, default='smtp.gmail.com')
+EMAIL_HOST_USER = get_envvar('EMAIL_HOST_USER', str, required=True)
+EMAIL_HOST_PASSWORD = SUPERUSER_PASSWORD = get_envvar('EMAIL_HOST_PASSWORD', str, required=True)
+EMAIL_PORT = get_envvar('EMAIL_PORT', int, required=True)
+EMAIL_USE_TLS = get_envvar('EMAIL_USE_TLS', bool, default=True)
+MAX_ACTIVE_SEARCHES_PER_USER = get_envvar('MAX_ACTIVE_SEARCHES_PER_USER', int, default=3)
+VIBER_AUTH_TOKEN = get_envvar('VIBER_AUTH_TOKEN', str, required=True)
+SUPERUSER_VIBER_ID = get_envvar('SUPERUSER_VIBER_ID', str, required=True)
+SUPERUSER_NAME = get_envvar('SUPERUSER_NAME', str, required=True)
+SUPERUSER_EMAIL = get_envvar('SUPERUSER_EMAIL', str, required=True)

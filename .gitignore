@@ -185,5 +185,5 @@ db.sqlite3
 .idea/
 prod_settings.py
 
-# trash
-trash/
+# Docker
+*Dockerfile
